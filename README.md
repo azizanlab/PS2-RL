@@ -6,6 +6,8 @@
   <a href="https://kaiyun717.github.io/">Kai S. Yun</a> &nbsp;·&nbsp; <a href="https://scholar.google.com/citations?user=gksmrPsAAAAJ&hl=en">Zeyang Li</a> &nbsp;·&nbsp; <a href="https://azizan.mit.edu/index.html">Navid Azizan</a>
   <br>
   <i>Massachusetts Institute of Technology</i>
+  <br><br>
+  <b>NeurIPS <span style="color: darkred;">Spotlight</span> 2026, Sydney</b>
 </p>
 
 
