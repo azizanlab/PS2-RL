@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PS2-RL: Provably Safe, Yet Scalable Reinforcement Learning</title>
+  <meta name="description" content="PS2-RL learns a backup policy that generates an implicit control-invariant set, then trains an RL policy end-to-end through a differentiable control-invariant layer: provable safety without computing invariant sets.">
+  <meta name="author" content="Kai S. Yun, Zeyang Li, Navid Azizan">
+  <meta name="theme-color" content="#fbfaf6">
+  <!-- Social previews. If the site is served from a different URL, update og:url and og:image. -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="PS2-RL: Provably Safe, Yet Scalable Reinforcement Learning">
+  <meta property="og:description" content="Learn a backup policy, then train through a differentiable control-invariant layer: 100% safe RL on a 10-D quadrotor, with no explicit invariant-set synthesis.">
+  <meta property="og:url" content="https://azizanlab.github.io/PS2-RL/">
+  <meta property="og:image" content="https://azizanlab.github.io/PS2-RL/assets/img/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script defer src="assets/js/figure-manifest.js"></script>
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/scrolly.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-nav" id="site-nav">
+  <a class="brand" href="#top" aria-label="PS2-RL home">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 12.6C2.6 7.6 6.4 3.4 11.6 3.1c5.4-.3 9.5 3.2 9.3 8.2-.2 5.3-4.4 9.4-9.6 9.5-4.6.1-7.6-3.3-8.1-8.2Z" fill="#A7BFBE" stroke="#15181f" stroke-width="1.3"/><ellipse cx="12" cy="12" rx="5" ry="3.3" transform="rotate(-28 12 12)" fill="#1B5A9B" stroke="#15181f" stroke-width="1"/></svg>
+    PS2-RL
+  </a>
+  <nav class="nav-links" aria-label="Sections">
+    <a class="nav-sec" href="#framework">How it works</a>
+    <a class="nav-sec" href="#method">Method</a>
+    <a class="nav-sec" href="#results">Results</a>
+    <a href="math.html">Math</a>
+    <a class="nav-ext" href="https://arxiv.org/abs/2606.14536">Paper</a>
+    <a class="nav-ext" href="https://github.com/azizanlab/PS2-RL">Code</a>
+  </nav>
+</header>
+
+<main id="main">
+
+<!-- ================================================================ hero -->
+<section class="hero" id="top">
+  <div class="hero-grid">
+    <div class="hero-text">
+      <p class="venue"><span class="dot" aria-hidden="true"></span>NeurIPS 2026 · Spotlight</p>
+      <h1><span class="abbr">PS2-RL</span>Provably Safe, <em>Yet</em> Scalable Reinforcement Learning</h1>
+      <p class="authors">
+        <span><a href="https://kaiyun717.github.io/">Kai S. Yun</a></span>
+        <span><a href="https://scholar.google.com/citations?user=gksmrPsAAAAJ">Zeyang Li</a><sup>†</sup></span>
+        <span><a href="https://azizan.mit.edu/">Navid Azizan</a></span>
+      </p>
+      <p class="affil">Massachusetts Institute of Technology &nbsp;·&nbsp; <sup>†</sup>Corresponding author</p>
+      <div class="btn-row">
+        <a class="btn primary" href="https://arxiv.org/abs/2606.14536">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+          arXiv 2606.14536
+        </a>
+        <a class="btn" href="https://arxiv.org/pdf/2606.14536">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14"/></svg>
+          PDF
+        </a>
+        <a class="btn" href="https://github.com/azizanlab/PS2-RL">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+          Code
+        </a>
+        <a class="btn" href="math.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 4H6l6 8-6 8h12"/></svg>
+          The math
+        </a>
+        <a class="btn" href="#bibtex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h4v4c0 3-1.5 5-4 6M14 7h4v4c0 3-1.5 5-4 6"/></svg>
+          BibTeX
+        </a>
+      </div>
+    </div>
+    <figure class="hero-media">
+      <div class="media-frame">
+        <video controls class="autoplay" muted loop playsinline preload="metadata" poster="assets/video/quad_ps2_sa.webp" aria-label="PS2-RL quadrotor tracking the powerloop below the ceiling">
+          <source src="assets/video/quad_ps2_sa.mp4" type="video/mp4">
+        </video>
+        <span class="media-badge">PS2-RL · 10-D quadrotor</span>
+        <span class="media-badge speed">0.5× speed</span>
+      </div>
+      <figcaption>The powerloop reference (dashed) climbs <strong>above the 3&nbsp;m ceiling</strong> (red plane). The PS2-RL policy stays close to it and never crosses the ceiling.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ================================================================ tl;dr -->
+<section class="section" id="tldr" aria-label="Key results" style="padding-top:8px">
+  <div class="tiles">
+    <div class="tile">
+      <div class="num">100%</div>
+      <div class="lbl">safe evaluation episodes for PS2-RL on both tasks (10 seeds × 1,000 episodes each), with safety enforced during training too.</div>
+      <div class="src">Tables 1–2</div>
+    </div>
+    <div class="tile">
+      <div class="num">10-D</div>
+      <div class="lbl">quadrotor state with bounded thrust and body rates, a regime where certificate-based provably safe RL struggles.</div>
+      <div class="src">Section 5.2</div>
+    </div>
+    <div class="tile">
+      <div class="num">−57%</div>
+      <div class="lbl">position error vs. the same framework with an analytic backup policy (0.60&nbsp;m vs 1.39&nbsp;m RMSE).</div>
+      <div class="src">Table 2</div>
+    </div>
+    <div class="tile">
+      <div class="num">0.80<small>ms</small></div>
+      <div class="lbl">per control step on the quadrotor, including backup rollout and QP solve, against a 20&nbsp;ms control period.</div>
+      <div class="src">Table 13</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================= abstract -->
+<section class="section" id="abstract">
+  <div class="abstract">
+    <p class="eyebrow">Abstract</p>
+    <p class="abstract-text">Safe reinforcement learning (RL) aims to learn policies that optimize rewards while satisfying constraints. Predominant approaches rely on soft-constrained policy optimization, which has achieved empirical success but does not provide formal safety guarantees for the learned policy. In contrast, methods with strict guarantees typically rely on explicit certificate functions, whose construction requires the direct synthesis and verification of control-invariant sets, a process that scales poorly with state dimension and often yields overly conservative behavior. In this paper, we present the Provably Safe, yet Scalable RL (PS2-RL) framework, a novel two-phase architecture for learning provably safe policies in a scalable manner, designed to overcome the key bottlenecks of prior methods. Rather than explicitly computing invariant sets, PS2-RL leverages a learned backup policy to forward-integrate the system dynamics, generating an implicit control-invariant set online. In the first phase, the backup policy is trained with our proposed safe-arrival value function, which characterizes the optimal backup policy for invariant-set construction. In the second phase, an RL policy is trained end-to-end through a differentiable projection layer that strictly enforces the safety guarantees induced by the learned backup policy. By maximizing the volume of the implicit control-invariant set in the first phase, the resulting PS2 policy from the second phase is performant and scalable, while maintaining provable safety. Crucially, PS2-RL imposes no restrictions on the underlying RL algorithm and can be plugged into any existing training pipeline. We establish theoretical guarantees for the proposed framework and evaluate it on robotic control tasks with state dimensions up to 10, a regime in which prior provably safe RL methods struggle or become impractical.</p>
+  </div>
+</section>
+
+<!-- ======================================================= scrollytelling -->
+<section class="scrolly is-static" id="framework" aria-labelledby="framework-title">
+  <div class="scrolly-head">
+    <div class="prose">
+      <p class="eyebrow">How it works</p>
+      <h2 class="section-title" id="framework-title">First learn where safety is possible, then learn to perform inside it</h2>
+      <p class="section-lede" style="margin-bottom:0">Figure 1 of the paper, assembled one piece at a time as you scroll. Phase I builds the safety certificate; Phase II trains the task policy through it.</p>
+    </div>
+  </div>
+
+  <div class="scrolly-track" id="scrolly-track" hidden>
+    <div class="scrolly-sticky">
+      <div class="rail" id="rail" aria-label="Animation steps"></div>
+      <div class="fig-viewport" id="fig-viewport" role="img" aria-label="Figure 1, overview of the PS2-RL framework, built up step by step">
+        <div class="fig-world" id="fig-world"></div>
+      </div>
+      <div class="captions" id="captions" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <div class="scrolly-static" id="scrolly-static">
+    <figure class="fig-static"><img src="assets/img/fig1_full.webp" alt="Figure 1: overview of the PS2-RL framework. Left, Phase I: a certified base set and controller, and safe-arrival policy training with the safe-arrival value function, enlarge the backup-induced invariant set. Center: the composed backup policy. Right, Phase II: the RL policy is trained through the control-invariant layer." width="3000" height="920" loading="lazy"></figure>
+    <ol class="static-steps" id="steps">
+      <li data-phase="0">
+        <p class="cap-kicker p0">PS2-RL</p>
+        <h3>Provable safety at a scale RL can handle</h3>
+        <p>The goal: maximize task return while keeping $x_k\in\mathcal S$ and $u_k\in\mathcal U$ at every step, from every initial state. PS2-RL splits this into two subproblems, solved in two phases. Scroll to build the framework.</p>
+      </li>
+      <li data-phase="1">
+        <p class="cap-kicker p1">Phase I · Objective</p>
+        <h3>Enlarge the region where safety can be certified</h3>
+        <p>The backup-induced invariant set $\mathcal C_T(\pi_b)$ holds every state from which a backup policy $\pi_b$ safely returns to a small base set $\mathcal B$ within horizon $T$. A hand-designed backup certifies a small set (left); a learned one certifies a much larger set (right).</p>
+      </li>
+      <li data-phase="1">
+        <p class="cap-kicker p1">Phase I · Step 1</p>
+        <h3>Start from a small certified base set</h3>
+        <p>Around an equilibrium $x^\star$, the linear controller $\pi_{\mathcal B}=u^\star-Ke$ keeps the ellipsoid $\mathcal B=\{e^\top Pe\le c_{\mathcal B}\}$ invariant, inside $\mathcal S$ and within input limits. Theorem 4.1 shows such a pair always exists under local stabilizability. It is the only piece that must be certified.</p>
+      </li>
+      <li data-phase="1">
+        <p class="cap-kicker p1">Phase I · Step 2</p>
+        <h3>Score a policy by safe arrival</h3>
+        <p>The safe-arrival value is built only from indicators: $\mathbf b$ for entering $\mathcal B$, $\mathbf f$ for entering the failure set $\mathcal F=\mathcal X\setminus\mathcal S$, and $\mathbf c=1-\mathbf b-\mathbf f$ while still in transit. It rewards the first safe arrival, discounted by $\beta$ per step.</p>
+      </li>
+      <li data-phase="1">
+        <p class="cap-kicker p1">Phase I · Step 2</p>
+        <h3>Safe beats unsafe; fast beats slow</h3>
+        <p>A rollout that reaches $\mathcal B$ safely in 3 steps scores $\beta^3$. One that needs 5 steps scores $\beta^5<\beta^3$, and one that hits $\mathcal F$ first scores $0$. The maximizer is therefore the time-optimal safe-arrival policy.</p>
+      </li>
+      <li data-phase="1">
+        <p class="cap-kicker p1">Phase I · Step 2</p>
+        <h3>Learn it with standard RL</h3>
+        <p>The value obeys $Q_{\mathrm{SA},\beta}(x,u)=\mathbf b(x)+\beta\,\mathbf c(x)\,Q_{\mathrm{SA},\beta}(x',\pi(x'))$, so any actor–critic or Q-learning backbone can train the safe-arrival policy $\pi^\theta_{\mathrm{SA}}$ to bring sampled states (green) into $\mathcal B$.</p>
+      </li>
+      <li data-phase="1">
+        <p class="cap-kicker p1">Phase I → Phase II</p>
+        <h3>Compose and freeze the backup policy</h3>
+        <p>The backup policy $\pi_b^\theta$ runs the linear base controller inside $\mathcal B$ and the frozen learned policy outside it. The learned part needs no certificate: backup rollouts certify exactly the states from which it succeeds.</p>
+      </li>
+      <li data-phase="2">
+        <p class="cap-kicker p2">Phase II · Objective</p>
+        <h3>Train the task policy inside the certified set</h3>
+        <p>Maximize return $J(\pi_\phi)$ subject to $\pi_\phi(x)\in\mathbb K_{\mathrm{BCBF}}$ for every $x\in\mathcal C_T(\pi_b^\theta)$. With the backup policy frozen, these BCBF constraints are affine in the action, so the admissible set is convex.</p>
+      </li>
+      <li data-phase="2">
+        <p class="cap-kicker p2">Phase II · Control-invariant layer</p>
+        <h3>Project every action onto the admissible set</h3>
+        <p>The control-invariant layer (CIL), $\mathcal P_{\mathrm{CIL}}(\pi_\phi)(x)=\arg\min_u\|u-\pi_\phi(x)\|_2^2$ s.t. $u\in\mathbb K_{\mathrm{BCBF}}(x)$, is a small QP. It keeps the action only where the backup policy could still bring the system safely to $\mathcal B$.</p>
+      </li>
+      <li data-phase="2">
+        <p class="cap-kicker p2">Phase II · Control-invariant layer</p>
+        <h3>Check for a safe flow at every step</h3>
+        <p>Along the trajectory, each state is checked for a safe backup flow into $\mathcal B$ (green). An action that would lead to a state with no safe flow (red) is projected back, so the system never leaves $\mathcal C_T$.</p>
+      </li>
+      <li data-phase="2">
+        <p class="cap-kicker p2">Phase II · Training</p>
+        <h3>Backpropagate through the projection</h3>
+        <p>The QP is differentiable, so reward gradients flow through the CIL into $\pi_\phi$. The network learns high-return actions that already respect the constraints. Any RL backbone works; the experiments use SAC.</p>
+      </li>
+      <li data-phase="0">
+        <p class="cap-kicker p0">PS2-RL</p>
+        <h3>Provably safe, yet scalable</h3>
+        <p>Safety comes from a small certified base set plus backup rollouts; performance comes from end-to-end RL through the layer. Every PS2 policy keeps $x_k\in\mathcal S$ and $u_k\in\mathcal U$ for all $k$ (Theorem 4.3) without losing expressivity (Theorem 4.4). <a href="math.html">Read the math →</a></p>
+      </li>
+    </ol>
+    <button class="motion-toggle" id="motion-on" type="button" hidden>Play the scroll animation instead</button>
+  </div>
+</section>
+
+<!-- =============================================================== method -->
+<section class="section" id="method" style="padding-top:clamp(56px,9vw,104px)">
+  <div class="container">
+    <div class="prose" style="margin:0 0 30px;max-width:50rem">
+      <p class="eyebrow">Method</p>
+      <h2 class="section-title">Three ideas, in plain words</h2>
+      <p class="section-lede">PS2-RL never computes an invariant set. It certifies safety by simulating a backup policy, learns that backup policy so the certified region is large, and then trains the task policy through a projection layer that can only output certified actions.</p>
+    </div>
+
+    <div class="idea-grid">
+      <article class="idea">
+        <div class="idea-num n0">0</div>
+        <div>
+          <h3>The problem: hard constraints, every step, every start</h3>
+          <p>We want the reward-maximizing policy among those that are <em>provably</em> safe under bounded inputs:</p>
+          <div class="eq">$$\max_{\pi}\; J(\pi)=\mathbb E\Big[\sum_{k=0}^{\infty}\gamma^k r(x_k,u_k)\Big]\quad\text{s.t.}\quad x_k\in\mathcal S,\;\; u_k\in\mathcal U\quad \forall k\ge 0,\;\forall x_0\in\mathcal X_0.$$</div>
+          <p>Penalty and Lagrangian (CMDP) methods only <em>encourage</em> this, so failures can still happen at deployment. Provable methods need a control-invariant set, a region from which safety can be maintained forever. Computing one explicitly is the bottleneck: Hamilton–Jacobi reachability grows exponentially with state dimension, and sum-of-squares certificates tend to be conservative.</p>
+        </div>
+      </article>
+
+      <article class="idea">
+        <div class="idea-num n1">1</div>
+        <div>
+          <h3>Certify by simulation, not by synthesis</h3>
+          <p>Start from a small set $\mathcal B$ around an equilibrium that a linear controller provably keeps invariant. Any state from which a <strong>backup policy</strong> $\pi_b$ reaches $\mathcal B$ within horizon $T$ without leaving $\mathcal S$ is safe forever, because the base controller holds it there afterwards. Those states form an implicit control-invariant set:</p>
+          <div class="eq">$$\mathcal C_T(\pi_b)=\big\{x:\ \Phi_{\pi_b}(x,T)\in\mathcal B\ \wedge\ \Phi_{\pi_b}(x,t')\in\mathcal S\ \ \forall t'\in[0,T]\big\}.$$</div>
+          <p>Membership is checked by rolling out $\pi_b$, so no set is ever stored. Along that rollout, the backup-CBF (BCBF) conditions are affine in the current action. The admissible actions therefore form a convex set $\mathbb K_{\mathrm{BCBF}}(x;\pi_b)$ that always contains $\pi_b(x)$. The catch: how large $\mathcal C_T$ is, and hence how freely the task policy may act, depends entirely on the backup policy. Hand-designed backups such as LQR recover only a small part of the truly safe region.</p>
+        </div>
+      </article>
+
+      <article class="idea">
+        <div class="idea-num n2">2</div>
+        <div>
+          <h3>Phase I: learn the backup with the safe-arrival value</h3>
+          <p>PS2-RL keeps the certified pair $(\mathcal B,\pi_{\mathcal B})$ and learns only what happens outside $\mathcal B$: a <strong>safe-arrival policy</strong> $\pi^\theta_{\mathrm{SA}}$ that steers states into $\mathcal B$ quickly while avoiding the failure set $\mathcal F=\mathcal X\setminus\mathcal S$. Its objective is an indicator-based value:</p>
+          <div class="eq">$$Q^{\pi_{\mathrm{SA}}}_{\mathrm{SA},\beta}(x,u)=\mathbb E\Big[\sum_{k=0}^{\infty}\beta^k\Big(\prod_{\tau=0}^{k-1}\mathbf c(x_\tau)\Big)\mathbf b(x_k)\Big],\qquad \mathbf b=\mathbf 1_{\mathcal B},\ \ \mathbf f=\mathbf 1_{\mathcal F},\ \ \mathbf c=1-\mathbf b-\mathbf f.$$</div>
+          <p>For deterministic dynamics it equals $\beta^N$ if the rollout first reaches $\mathcal B$ safely after $N$ steps, and $0$ otherwise. Maximizing it therefore prefers safe arrival over failure, and faster arrival over slower. Try it:</p>
+          <div class="beta-widget" id="beta-widget">
+            <div class="beta-head">
+              <label for="beta">Discount&nbsp;$\beta$</label>
+              <input type="range" id="beta" min="0.50" max="0.99" step="0.01" value="0.80" aria-describedby="beta-note">
+              <span class="beta-val" id="beta-val">0.80</span>
+            </div>
+            <div class="beta-rows" role="list">
+              <div class="beta-row" role="listitem"><span class="name">Fast, safe <small>reaches $\mathcal B$ in 3 steps</small></span><div class="beta-track"><div class="beta-bar" data-n="3" style="background:#3f8edf"></div></div><span class="v" data-v="3"></span></div>
+              <div class="beta-row" role="listitem"><span class="name">Slow, safe <small>reaches $\mathcal B$ in 5 steps</small></span><div class="beta-track"><div class="beta-bar" data-n="5" style="background:#2c4a6b"></div></div><span class="v" data-v="5"></span></div>
+              <div class="beta-row" role="listitem"><span class="name">Unsafe <small>hits $\mathcal F$ first</small></span><div class="beta-track"><div class="beta-bar" data-n="inf" style="background:#ce1a1a"></div></div><span class="v" data-v="inf"></span></div>
+            </div>
+            <p class="beta-note" id="beta-note">$Q_{\mathrm{SA},\beta}$ for the three rollouts of Figure 1. For any $\beta\in(0,1)$ the ranking is the same; $\beta$ sets how strongly speed is rewarded.</p>
+          </div>
+          <p>The value satisfies a Bellman equation, $Q_{\mathrm{SA},\beta}(x,u)=\mathbf b(x)+\beta\,\mathbf c(x)\,Q_{\mathrm{SA},\beta}\big(x',\pi_{\mathrm{SA}}(x')\big)$, which is a $\beta$-contraction, so any off-the-shelf RL algorithm can learn it. Its optimum is exactly the time-optimal safe-arrival policy, $V^\star_{\mathrm{SA},\beta}(x)=\beta^{d(x)}$. The learned policy is never certified, and it does not need to be: the rollout check of idea 1 only certifies the states from which it actually succeeds.</p>
+        </div>
+      </article>
+
+      <article class="idea">
+        <div class="idea-num n3">3</div>
+        <div>
+          <h3>Phase II: train through a control-invariant layer</h3>
+          <p>Freeze the composed backup policy $\pi_b^\star$ (the base controller inside $\mathcal B$, the learned $\pi^\star_{\mathrm{SA}}$ outside). The task policy's raw action is then projected onto the BCBF-admissible set by a differentiable quadratic program:</p>
+          <div class="eq">$$\pi^{\phi}_{\mathrm{PS2}}(x)=\mathcal P_{\mathrm{CIL}}(\pi_\phi)(x)=\arg\min_{u}\ \|u-\pi_\phi(x)\|_2^2\quad\text{s.t.}\quad u\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star).$$</div>
+          <p>Every executed action, in training and in deployment, is certified. Because the QP is differentiable, reward gradients flow through the projection into the network, so the policy learns to perform well <em>inside</em> the safe set instead of being corrected after the fact. The QP stays small: $m$ decision variables and $O(Nn_{\mathcal S}+n_{\mathcal B}+2m)$ affine rows (102 BCBF rows for the quadrotor). It grows linearly with the backup mesh, not exponentially with the state dimension.</p>
+        </div>
+      </article>
+    </div>
+
+    <h3 class="sub" id="guarantees">What is guaranteed</h3>
+    <div class="thm-grid">
+      <a class="thm" href="math.html#thm-4-1">
+        <span class="tag">Theorem 4.1</span>
+        <h4>A certified base set always exists</h4>
+        <p>Under local stabilizability, any stabilizing linear gain with a small enough Lyapunov sublevel set gives a valid $(\mathcal B,\pi_{\mathcal B})$: inside $\mathcal S$, within input limits, and invariant.</p>
+        <span class="more">Statement and proof →</span>
+      </a>
+      <a class="thm" href="math.html#thm-4-2">
+        <span class="tag">Theorem 4.2</span>
+        <h4>The decomposition is certified</h4>
+        <p>Phase I then Phase II yields a safe policy that is optimal among all policies certified by the learned backup, and globally optimal whenever that class contains an optimal safe policy.</p>
+        <span class="more">Statement and proof →</span>
+      </a>
+      <a class="thm" href="math.html#thm-4-3">
+        <span class="tag">Theorem 4.3</span>
+        <h4>Safe for any network weights</h4>
+        <p>If $\mathcal X_0\subseteq\mathcal C_T(\pi_b^\star)$, every PS2 policy keeps $x_k\in\mathcal S$ and $u_k\in\mathcal U$ for all $k$, before, during and after training.</p>
+        <span class="more">Statement and proof →</span>
+      </a>
+      <a class="thm" href="math.html#thm-4-4">
+        <span class="tag">Theorem 4.4</span>
+        <h4>No loss of expressivity</h4>
+        <p>Composing a universal approximator with the CIL universally approximates every continuous BCBF-feasible policy.</p>
+        <span class="more">Statement and proof →</span>
+      </a>
+    </div>
+    <p class="callout" style="max-width:50rem">The formal guarantees assume a control-affine model of the dynamics (or a differentiable simulator; see the math page) and hold for the sampled-data system. With exact BCBF constraints, the implicit set never has to be computed or verified.</p>
+  </div>
+</section>
+
+<!-- ============================================================== results -->
+<section class="section" id="results">
+  <div class="container">
+    <div class="prose" style="margin:0 0 40px;max-width:50rem">
+      <p class="eyebrow">Results</p>
+      <h2 class="section-title">100% safe, with the best tracking among safe methods</h2>
+      <p class="section-lede">Both tasks track references that intentionally leave the safe set. PS2-RL with the learned safe-arrival policy (<span class="c-sa">PS2<sub>SA</sub></span>) is compared with seven baselines: SAC with a low or high violation penalty, constrained-MDP methods (CPO, SAC-Lagrangian), and provably safe RL (CBF-RL, MPS, and PS2-RL with an analytic backup policy, <span class="c-abp">PS2<sub>ABP</sub></span>). Every method is trained with 10 seeds and evaluated on 1,000 episodes per seed.</p>
+    </div>
+
+    <!-- ---------------------------------------------------------- unicycle -->
+    <div class="result-block" id="unicycle">
+      <div class="result-head">
+        <p class="eyebrow">Task 1</p>
+        <h3>Unicycle lane keeping</h3>
+        <p>The state is $x=[y,v,\psi]^\top$ (lateral offset, speed, heading), with inputs $a\in[-5,5]\,\mathrm{m/s^2}$ and $r\in[-1,1]\,\mathrm{rad/s}$. The safe set is $|y|\le 1.8$&nbsp;m and $|\psi|\le\pi/3$, but the 20-second sinusoidal reference swings to $\pm2.5$&nbsp;m, outside the lane on purpose. On a dense $201\times121\times201$ grid, the learned safe-arrival policy enlarges the safe-arrival measure from <b>0.23</b> (analytic) to <b>0.33</b>. It covers 99.08% of the analytic set and is 1.43× larger at the task speed.</p>
+      </div>
+      <figure class="fig pad">
+        <div class="media-frame"><img src="assets/img/unicycle_sets.webp" alt="Learned versus analytic backup-induced invariant sets for the unicycle, with slices at fixed speed and tracking results" width="2400" height="620" loading="lazy"></div>
+        <figcaption><strong>Figure 2.</strong> Left: the invariant set induced by the learned safe-arrival policy (blue) contains and extends the one induced by the analytic policy (tan) around the base set (red). Middle: slices at fixed speed $v$. Right: <span class="c-sa">PS2<sub>SA</sub></span> tracks the unsafe reference more closely than <span class="c-abp">PS2<sub>ABP</sub></span>, while the implicit barrier $h_{\mathcal C_T}(x)$ stays nonnegative.</figcaption>
+      </figure>
+      <div class="two-col">
+        <figure class="fig pad">
+          <div class="media-frame"><img src="assets/img/hj_comparison.webp" alt="HJ reachability invariant set versus learned backup-policy invariant set at v = 5 m/s" width="1609" height="1165" loading="lazy"></div>
+          <figcaption><strong>How close to optimal is the learned backup?</strong> At $v=5$&nbsp;m/s, the invariant set certified by a learned safe-arrival policy (horizon $T=3$&nbsp;s, dashed boundary) almost coincides with the maximal control-invariant set from Hamilton–Jacobi reachability (blue boundary): IoU 0.97, covering 97.7% of the HJ set. <em>Additional analysis, not in the arXiv version.</em></figcaption>
+        </figure>
+        <figure class="fig pad">
+          <div class="media-frame"><img src="assets/img/unicycle_traces.webp" alt="Lateral trajectories y(t) for all eight methods on the unicycle task" width="1400" height="1469" loading="lazy"></div>
+          <figcaption><strong>Figure 6.</strong> Representative lateral trajectories. Dotted: the unsafe reference. Dashed red: lane boundary. <span class="c-sa">PS2<sub>SA</sub></span> rides near the boundary without crossing it; <span class="c-abp">PS2<sub>ABP</sub></span> is safe but conservative; MPS chatters along the boundary; penalty and CMDP baselines cross it.</figcaption>
+        </figure>
+      </div>
+      <div class="table-wrap">
+        <table class="results">
+          <caption><b>Table 1.</b> Unicycle lane keeping, 10 seeds × 1,000 episodes. RMSE: interquartile mean [95% CI] (lower is better). Bold: best among methods that are 100% safe.</caption>
+          <thead>
+            <tr class="grp"><th colspan="2"></th><th colspan="3">Tracking (RMSE)</th><th colspan="3">Safety</th></tr>
+            <tr>
+              <th class="fam" scope="col"><span class="sr-only">Family</span></th><th scope="col" style="text-align:left">Method</th>
+              <th scope="col">$y$ (m) ↓</th><th scope="col">$v$ (m/s) ↓</th><th scope="col">$\psi$ (rad) ↓</th>
+              <th scope="col">Total safety ↑<span class="sub">safe ep / total ep</span></th><th scope="col">Per-seed safety ↑<span class="sub">IQM [95% CI]</span></th><th scope="col">Worst viol. ↓<span class="sub">$y$ (m)</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="gstart"><td class="fam">Pen</td><th scope="row">SAC-Pen<sub>low</sub></th><td>0.53<span class="ci">[0.34, 0.96]</span></td><td>2.14<span class="ci">[1.20, 3.11]</span></td><td>0.19<span class="ci">[0.09, 0.38]</span></td><td class="v-bad">1.8% ± 5.4%</td><td class="v-bad">0.0% [0.0%, 3.0%]</td><td class="v-bad">8.12</td></tr>
+            <tr><td class="fam"></td><th scope="row">SAC-Pen<sub>high</sub></th><td>1.11<span class="ci">[0.99, 1.25]</span></td><td>1.85<span class="ci">[1.26, 2.84]</span></td><td>0.15<span class="ci">[0.13, 0.19]</span></td><td class="best">100% ± 0.0%</td><td class="best">100% [100%, 100%]</td><td class="best">0.00</td></tr>
+            <tr class="gstart"><td class="fam">Con</td><th scope="row">SAC-Lag.</th><td>0.52<span class="ci">[0.40, 0.66]</span></td><td>1.22<span class="ci">[0.99, 1.54]</span></td><td>0.12<span class="ci">[0.09, 0.14]</span></td><td class="v-bad">30.0% ± 45.8%</td><td class="v-bad">16.7% [0.0%, 66.7%]</td><td class="v-bad">1.03</td></tr>
+            <tr><td class="fam"></td><th scope="row">CPO</th><td>2.51<span class="ci">[1.66, 7.29]</span></td><td>4.44<span class="ci">[3.05, 5.36]</span></td><td>0.27<span class="ci">[0.20, 0.57]</span></td><td class="v-bad">64.2% ± 40.2%</td><td class="v-bad">73.7% [32.5%, 99.6%]</td><td class="v-bad">76.94</td></tr>
+            <tr class="gstart"><td class="fam">PSRL</td><th scope="row">CBF-RL</th><td>1.78<span class="ci">[1.75, 1.80]</span></td><td>4.72<span class="ci">[3.69, 4.91]</span></td><td>0.27<span class="ci">[0.24, 0.30]</span></td><td>99.8% ± 0.003%</td><td>100% [99.6%, 100%]</td><td>0.00</td></tr>
+            <tr><td class="fam"></td><th scope="row">MPS</th><td>0.68<span class="ci">[0.55, 0.78]</span></td><td>0.48<span class="ci">[0.43, 0.53]</span></td><td>0.17<span class="ci">[0.14, 0.19]</span></td><td>97.8% ± 0.005%</td><td>97.8% [97.5%, 98.2%]</td><td class="v-bad">0.67</td></tr>
+            <tr class="abp"><td class="fam"></td><th scope="row">PS2<sub>ABP</sub></th><td>0.97<span class="ci">[0.97, 0.98]</span></td><td class="best">0.43<span class="ci">[0.35, 0.55]</span></td><td>0.15<span class="ci">[0.14, 0.15]</span></td><td class="best">100% ± 0.0%</td><td class="best">100% [100%, 100%]</td><td class="best">0.00</td></tr>
+            <tr class="ours"><td class="fam"></td><th scope="row">PS2<sub>SA</sub> (ours)</th><td class="best">0.52<span class="ci">[0.51, 0.54]</span></td><td>0.83<span class="ci">[0.76, 0.88]</span></td><td class="best">0.11<span class="ci">[0.10, 0.11]</span></td><td class="best">100% ± 0.0%</td><td class="best">100% [100%, 100%]</td><td class="best">0.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">The task reward weights lateral error roughly 19× more than speed error, so <span class="c-sa">PS2<sub>SA</sub></span> trades speed accuracy for much lower lateral and heading error. Compared with <span class="c-abp">PS2<sub>ABP</sub></span>, the learned backup cuts lateral RMSE from 0.97&nbsp;m to 0.52&nbsp;m.</p>
+    </div>
+
+    <!-- ---------------------------------------------------------- quadrotor -->
+    <div class="result-block" id="quadrotor">
+      <div class="result-head">
+        <p class="eyebrow">Task 2</p>
+        <h3>Quadrotor powerloop: 10-D, agile, input-limited</h3>
+        <p>The state is $x=[\mathbf p^\top,\mathbf v^\top,\mathbf q^\top]^\top\in\mathbb R^{10}$ (position, velocity, unit quaternion). The inputs are thrust $a\in[0,4g]$ and body rates $\omega\in[-18,18]^3$&nbsp;rad/s at 50&nbsp;Hz. The reference is a vertical loop of radius 1.5&nbsp;m entered at 4.5&nbsp;m/s with a full 360° flip, and its apex exceeds the 3&nbsp;m ceiling. Safety is a single altitude bound, but it must be enforced through the full 10-D dynamics and all four inputs.</p>
+      </div>
+
+      <div class="compare-toolbar">
+        <span class="compare-label">Compare PS2<sub>SA</sub> with</span>
+        <div class="method-picker" id="method-picker" role="group" aria-label="Choose a method to compare"></div>
+      </div>
+      <div class="compare" id="compare">
+        <div class="compare-card">
+          <video controls class="autoplay sync" muted loop playsinline preload="metadata" poster="assets/video/quad_ps2_sa.webp" aria-label="PS2-RL with the learned safe-arrival policy">
+            <source src="assets/video/quad_ps2_sa.mp4" type="video/mp4">
+          </video>
+          <div class="compare-meta">
+            <div class="compare-title"><span class="swatch" style="background:#2266B0"></span>PS2<sub>SA</sub> (ours)</div>
+            <div class="metrics"><span>pos. RMSE <b>0.60 m</b></span><span>safe episodes <b>100%</b></span><span>worst violation <b>0.00 m</b></span></div>
+          </div>
+        </div>
+        <div class="compare-card">
+          <video controls class="autoplay sync" id="compare-video" muted loop playsinline preload="metadata" poster="assets/video/quad_ps2_abp.webp" aria-label="Selected baseline">
+            <source src="assets/video/quad_ps2_abp.mp4" type="video/mp4">
+          </video>
+          <div class="compare-meta">
+            <div class="compare-title" id="compare-title"><span class="swatch" style="background:#9A4A0E"></span>PS2<sub>ABP</sub></div>
+            <div class="metrics" id="compare-metrics"></div>
+          </div>
+        </div>
+      </div>
+      <p class="compare-note">One representative evaluation rollout per method, played at 0.5× speed. Dashed: reference. Red plane: ceiling at $z=3$&nbsp;m. Metrics are interquartile means over 10 seeds × 1,000 episodes (Table 2).</p>
+
+      <div class="table-wrap" style="margin-top:22px">
+        <table class="results">
+          <caption><b>Table 2.</b> Quadrotor powerloop, 10 seeds × 1,000 episodes. RMSE: interquartile mean [95% CI] (lower is better). Bold: best among methods that are 100% safe.</caption>
+          <thead>
+            <tr class="grp"><th colspan="2"></th><th colspan="3">Tracking (RMSE)</th><th colspan="3">Safety</th></tr>
+            <tr>
+              <th class="fam" scope="col"><span class="sr-only">Family</span></th><th scope="col" style="text-align:left">Method</th>
+              <th scope="col">$\mathbf p$ (m) ↓</th><th scope="col">$\mathbf v$ (m/s) ↓</th><th scope="col">$\theta_{\mathbf q}$ (rad) ↓</th>
+              <th scope="col">Total safety ↑<span class="sub">safe ep / total ep</span></th><th scope="col">Per-seed safety ↑<span class="sub">IQM [95% CI]</span></th><th scope="col">Worst viol. ↓<span class="sub">$z$ (m)</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="gstart"><td class="fam">Pen</td><th scope="row">SAC-Pen<sub>low</sub></th><td>1.00<span class="ci">[0.72, 1.36]</span></td><td>1.88<span class="ci">[1.51, 2.36]</span></td><td>1.15<span class="ci">[0.74, 1.59]</span></td><td class="v-bad">47.3% ± 44.6%</td><td class="v-bad">45.5% [7.2%, 89.7%]</td><td class="v-bad">0.62</td></tr>
+            <tr><td class="fam"></td><th scope="row">SAC-Pen<sub>high</sub></th><td>1.14<span class="ci">[1.02, 1.48]</span></td><td>2.24<span class="ci">[1.84, 2.63]</span></td><td>1.54<span class="ci">[1.30, 1.79]</span></td><td>99.9% ± 6e-4%</td><td>100% [99.9%, 100%]</td><td>0.004</td></tr>
+            <tr class="gstart"><td class="fam">Con</td><th scope="row">SAC-Lag.</th><td>1.94<span class="ci">[1.70, 2.53]</span></td><td>4.30<span class="ci">[3.97, 4.58]</span></td><td>2.12<span class="ci">[1.77, 2.26]</span></td><td class="v-bad">58.6% ± 43.9%</td><td class="v-bad">64.3% [19.0%, 100%]</td><td class="v-bad">1.79</td></tr>
+            <tr><td class="fam"></td><th scope="row">CPO</th><td>10.62<span class="ci">[7.08, 13.17]</span></td><td>11.55<span class="ci">[9.28, 13.94]</span></td><td>2.17<span class="ci">[2.04, 2.36]</span></td><td class="v-bad">70.0% ± 45.8%</td><td class="v-bad">83.3% [33.3%, 100%]</td><td class="v-bad">2.41</td></tr>
+            <tr class="gstart"><td class="fam">PSRL</td><th scope="row">CBF-RL</th><td>2.29<span class="ci">[1.71, 2.97]</span></td><td>4.36<span class="ci">[4.00, 4.64]</span></td><td>2.06<span class="ci">[1.80, 2.29]</span></td><td>99.8% ± 0.005%</td><td>100% [99.7%, 100%]</td><td class="v-bad">0.21</td></tr>
+            <tr><td class="fam"></td><th scope="row">MPS</th><td>1.99<span class="ci">[1.95, 2.05]</span></td><td>4.07<span class="ci">[3.89, 4.21]</span></td><td>1.38<span class="ci">[1.31, 1.51]</span></td><td class="best">100% ± 0.0%</td><td class="best">100% [100%, 100%]</td><td class="best">0.00</td></tr>
+            <tr class="abp"><td class="fam"></td><th scope="row">PS2<sub>ABP</sub></th><td>1.39<span class="ci">[1.30, 1.53]</span></td><td>1.74<span class="ci">[1.62, 1.92]</span></td><td>0.75<span class="ci">[0.71, 0.90]</span></td><td class="best">100% ± 0.0%</td><td class="best">100% [100%, 100%]</td><td class="best">0.00</td></tr>
+            <tr class="ours"><td class="fam"></td><th scope="row">PS2<sub>SA</sub> (ours)</th><td class="best">0.60<span class="ci">[0.53, 0.70]</span></td><td class="best">0.96<span class="ci">[0.75, 1.18]</span></td><td class="best">0.45<span class="ci">[0.33, 0.53]</span></td><td class="best">100% ± 0.0%</td><td class="best">100% [100%, 100%]</td><td class="best">0.00</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">Relative to <span class="c-abp">PS2<sub>ABP</sub></span>, the learned backup reduces every RMSE by about 40–57%. Relative to MPS, which is given a longer recovery horizon, position RMSE drops by about 70%.</p>
+    </div>
+
+    <!-- ----------------------------------------------------------- phase I -->
+    <div class="result-block" id="phase1">
+      <div class="result-head">
+        <p class="eyebrow">Inside Phase I</p>
+        <h3>A learned backup recovers from states the analytic one cannot</h3>
+        <p>Phase I is what makes Phase II less conservative. From task-relevant states around the powerloop, including states just below the ceiling, the learned safe-arrival policy safely reaches the base set from <b>85.9%</b> of states, versus <b>60.9%</b> for the analytic backup policy. The biggest gain is near the ceiling, exactly where the powerloop needs room.</p>
+      </div>
+      <div class="two-col">
+        <figure class="fig">
+          <div class="media-frame">
+            <video controls class="autoplay" muted loop playsinline preload="metadata" poster="assets/video/phase1_learned.webp" aria-label="Learned safe-arrival policy rollouts">
+              <source src="assets/video/phase1_learned.mp4" type="video/mp4">
+            </video>
+            <span class="media-badge">Learned $\pi^\theta_{\mathrm{SA}}$</span><span class="media-badge speed">0.5×</span>
+          </div>
+          <figcaption><strong style="color:var(--navy)">Learned safe-arrival policy.</strong> Trajectories bend away from the ceiling and into the base set; <span style="color:#a77b1f;font-weight:600">gold</span> segments are flown by the base controller $\pi_{\mathcal B}$ after entering $\mathcal B$.</figcaption>
+        </figure>
+        <figure class="fig">
+          <div class="media-frame">
+            <video controls class="autoplay" muted loop playsinline preload="metadata" poster="assets/video/phase1_analytic.webp" aria-label="Analytic safe-arrival policy rollouts">
+              <source src="assets/video/phase1_analytic.mp4" type="video/mp4">
+            </video>
+            <span class="media-badge">Analytic $\pi_{\mathrm{SA}}$</span><span class="media-badge speed">0.5×</span>
+          </div>
+          <figcaption><strong style="color:var(--brown)">Analytic safe-arrival policy.</strong> From aggressive near-ceiling and "bridge" states below the loop apex, many rollouts break through the ceiling before reaching $\mathcal B$.</figcaption>
+        </figure>
+      </div>
+      <div class="dumbbell" id="recov-chart">
+        <h4>Recoverability by region of the task-relevant design set</h4>
+        <p class="dsub">Share of sampled states from which the backup policy safely reaches $\mathcal B$ within $T=2$&nbsp;s (6,161 states).</p>
+        <svg id="recov-svg" role="img" aria-label="Recoverability by region, analytic versus learned safe-arrival policy"></svg>
+        <div class="legend"><span><i style="background:#9A4A0E"></i>Analytic $\pi_{\mathrm{SA}}$</span><span><i style="background:#2266B0"></i>Learned $\pi^\theta_{\mathrm{SA}}$</span></div>
+        <table class="sr-only">
+          <caption>Recoverability (%) by region</caption>
+          <tr><th>Region</th><th>Analytic</th><th>Learned</th></tr>
+          <tr><td>Near ceiling</td><td>35.5</td><td>69.3</td></tr>
+          <tr><td>Bridge</td><td>47.3</td><td>78.6</td></tr>
+          <tr><td>General trace</td><td>77.7</td><td>96.1</td></tr>
+          <tr><td>Capture shell</td><td>84.4</td><td>100.0</td></tr>
+          <tr><td>Overall</td><td>60.9</td><td>85.9</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ------------------------------------------------------ multi-safety -->
+    <div class="result-block" id="multi">
+      <div class="two-col uneven" style="align-items:center">
+        <div class="result-head" style="margin:0">
+          <p class="eyebrow">Beyond the paper</p>
+          <h3>Three constraints at once: a ceiling and two walls</h3>
+          <p>The same pipeline handles several simultaneous constraints. Here the powerloop must also fit between two walls, $-1\le x\le 1$&nbsp;m, under the $z\le3$&nbsp;m ceiling. The control-invariant layer simply stacks one row per constraint per backup node and is solved as a hard QP with no slack.</p>
+          <p>Across 5 training seeds × 1,000 evaluation episodes, all 5,000 episodes were safe, with zero ceiling or wall violations. The closest any episode came to a constraint was 4.4&nbsp;cm.</p>
+          <div class="pill-row"><span class="pill" style="color:#c62828">ceiling $z\le 3$</span><span class="pill" style="color:#3949ab">left wall $x\ge -1$</span><span class="pill" style="color:#00897b">right wall $x\le 1$</span></div>
+        </div>
+        <figure class="fig" style="margin:0">
+          <div class="media-frame">
+            <video controls class="autoplay" muted loop playsinline preload="metadata" poster="assets/video/quad_multisafety.webp" aria-label="PS2-RL quadrotor powerloop between two walls and below a ceiling">
+              <source src="assets/video/quad_multisafety.mp4" type="video/mp4">
+            </video>
+            <span class="media-badge">Front view</span><span class="media-badge speed">0.5×</span>
+          </div>
+          <figcaption>Best-return evaluation episode (seed 3). Minimum margins: 0.18&nbsp;m to the ceiling, 0.05&nbsp;m to the left wall, 0.17&nbsp;m to the right wall.</figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <!-- ---------------------------------------------------------- ablation -->
+    <div class="result-block" id="ablation" style="margin-bottom:0">
+      <div class="result-head">
+        <p class="eyebrow">Ablations &amp; compute</p>
+        <h3>The layer is needed at deployment and during training</h3>
+        <p>On the quadrotor, removing the control-invariant layer after training drops safety from 100% to 0%: the network has not simply memorized the constraint. Adding the layer only as a post-hoc filter to an unconstrained policy is safe but tracks 43–53% worse. Training <em>through</em> the layer is what recovers performance under the guarantee.</p>
+      </div>
+      <div class="two-col uneven">
+        <div>
+          <div class="table-wrap">
+            <table class="results" style="min-width:560px">
+              <caption><b>Table 12.</b> Paired ablation on the best-tracking quadrotor run, 1,000 episodes each.</caption>
+              <thead>
+                <tr><th scope="col" style="text-align:left">Policy</th><th scope="col">$\mathbf p$ (m)</th><th scope="col">$\mathbf v$ (m/s)</th><th scope="col">$\theta_{\mathbf q}$ (rad)</th><th scope="col">Safe</th><th scope="col">Mean max viol. (m)</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Vanilla + CIL <span class="ci" style="color:var(--muted);font-weight:400">(post-hoc)</span></th><td>0.928</td><td>1.134</td><td>0.431</td><td>100%</td><td>0.00</td></tr>
+                <tr><th scope="row">PS2<sub>SA</sub> w/o CIL</th><td>0.740</td><td>3.552</td><td>1.029</td><td class="v-bad">0.0%</td><td class="v-bad">0.198</td></tr>
+                <tr class="ours"><th scope="row">PS2<sub>SA</sub></th><td class="best">0.528</td><td class="best">0.627</td><td class="best">0.204</td><td class="best">100%</td><td class="best">0.00</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-wrap" style="margin-top:16px">
+            <table class="results" style="min-width:520px">
+              <caption><b>Compute</b> on one NVIDIA V100 (Table 13 and App.&nbsp;G.4; Phase II averaged over 10 seeds).</caption>
+              <thead>
+                <tr><th scope="col" style="text-align:left">PS2<sub>SA</sub></th><th scope="col">Phase I training</th><th scope="col">Phase II training</th><th scope="col">Inference / step</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">Unicycle</th><td>14 min</td><td>4.6 h</td><td>0.35 ms <span class="ci">(of 50 ms)</span></td></tr>
+                <tr><th scope="row">Quadrotor</th><td>40 min</td><td>13.6 h</td><td>0.80 ms <span class="ci">(of 20 ms)</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <figure class="fig pad" style="margin:0">
+          <div class="media-frame"><img src="assets/img/ablation_altitude.webp" alt="Altitude traces for Vanilla+CIL, PS2-SA without CIL, and PS2-SA" width="1800" height="642" loading="lazy"></div>
+          <figcaption><strong>Figure 9.</strong> Altitude $p_z$ of the best-tracking episode for each policy. Without the layer, the trained policy overshoots the 3&nbsp;m ceiling near the loop apex; with it, both policies stay below, but only the end-to-end trained one tracks closely.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============================================================== bibtex -->
+<section class="section" id="bibtex">
+  <div class="bib">
+    <p class="eyebrow">Citation</p>
+    <h2 class="section-title" style="font-size:clamp(1.6rem,3vw,2.1rem)">BibTeX</h2>
+    <div style="position:relative">
+<pre id="bibtex-text">@article{yun2026ps2rl,
+  title   = {Provably Safe, Yet Scalable Reinforcement Learning},
+  author  = {Yun, Kai S. and Li, Zeyang and Azizan, Navid},
+  journal = {arXiv preprint arXiv:2606.14536},
+  year    = {2026}
+}</pre>
+      <button class="copy-btn" type="button" data-copy="#bibtex-text">Copy</button>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>Kai S. Yun, Zeyang Li, Navid Azizan · Massachusetts Institute of Technology</span>
+    <span><a href="https://arxiv.org/abs/2606.14536">arXiv</a> · <a href="https://github.com/azizanlab/PS2-RL">Code</a> · <a href="math.html">Math</a> · Paper figures © the authors, CC BY 4.0</span>
+  </div>
+</footer>
+</body>
+</html>

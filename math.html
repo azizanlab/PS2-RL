@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Math of PS2-RL</title>
+  <meta name="description" content="Detailed mathematical background for PS2-RL: backup control barrier functions, the safe-arrival value function, the control-invariant layer, and the safety and expressivity guarantees.">
+  <meta name="theme-color" content="#fbfaf6">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="The Math of PS2-RL">
+  <meta property="og:description" content="Backup control barrier functions, the safe-arrival value function, the control-invariant layer, and the guarantees, with full equations.">
+  <meta property="og:image" content="https://azizanlab.github.io/PS2-RL/assets/img/og-image.png">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+  <script defer src="assets/js/site.js"></script>
+  <script defer src="assets/js/math.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-nav" id="site-nav">
+  <a class="brand" href="index.html" aria-label="PS2-RL overview">
+    <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.2 12.6C2.6 7.6 6.4 3.4 11.6 3.1c5.4-.3 9.5 3.2 9.3 8.2-.2 5.3-4.4 9.4-9.6 9.5-4.6.1-7.6-3.3-8.1-8.2Z" fill="#A7BFBE" stroke="#15181f" stroke-width="1.3"/><ellipse cx="12" cy="12" rx="5" ry="3.3" transform="rotate(-28 12 12)" fill="#1B5A9B" stroke="#15181f" stroke-width="1"/></svg>
+    PS2-RL
+  </a>
+  <nav class="nav-links" aria-label="Pages">
+    <a class="nav-sec" href="index.html#framework">How it works</a>
+    <a class="nav-sec" href="index.html#method">Method</a>
+    <a class="nav-sec" href="index.html#results">Results</a>
+    <a href="math.html" aria-current="page">Math</a>
+    <a class="nav-ext" href="https://arxiv.org/abs/2606.14536">Paper</a>
+    <a class="nav-ext" href="https://github.com/azizanlab/PS2-RL">Code</a>
+  </nav>
+</header>
+
+<main id="main">
+<section class="math-hero">
+  <div class="container">
+    <p class="eyebrow">PS2-RL · The math</p>
+    <h1>Safety from rollouts, performance from gradients</h1>
+    <p>This page collects the formulation and results of the paper in one place, from backup control barrier functions to the guarantees of the full pipeline. Numbers in parentheses, such as (10) or Theorem&nbsp;4.3, match the <a href="https://arxiv.org/abs/2606.14536">arXiv paper</a>. Proofs are summarized in collapsible blocks.</p>
+  </div>
+</section>
+
+<div class="math-layout">
+  <nav class="toc" id="toc" aria-label="On this page">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#setting">1. Setting</a></li>
+      <li><a href="#cbf">2. Control invariance &amp; CBFs</a></li>
+      <li><a href="#bcbf">3. Backup CBFs</a></li>
+      <li><a href="#problem">4. Problem &amp; decomposition</a>
+        <ol>
+          <li><a href="#thm-4-1">Certified base set</a></li>
+          <li><a href="#thm-4-2">Certified decomposition</a></li>
+        </ol>
+      </li>
+      <li><a href="#sav">5. Safe-arrival value</a>
+        <ol>
+          <li><a href="#sav-undiscounted">Undiscounted</a></li>
+          <li><a href="#sav-discounted">Discounted</a></li>
+          <li><a href="#sav-actions">Optimal actions</a></li>
+        </ol>
+      </li>
+      <li><a href="#phase1">6. Phase I training</a></li>
+      <li><a href="#cil">7. Control-invariant layer</a>
+        <ol>
+          <li><a href="#cil-qp">The QP, explicitly</a></li>
+          <li><a href="#thm-4-3">Safety guarantee</a></li>
+          <li><a href="#thm-4-4">Universal approximation</a></li>
+        </ol>
+      </li>
+      <li><a href="#scale">8. Scalability &amp; extensions</a></li>
+      <li><a href="#experiments">9. Experimental instantiation</a></li>
+    </ol>
+  </nav>
+
+  <article class="math-body">
+
+<!-- ================================================================== 1 -->
+<section id="setting">
+  <h2><span class="secnum">1</span>Setting</h2>
+  <p>We consider a control-affine, continuous-time system with bounded inputs,</p>
+  <div class="eq">$$\dot x = f(x) + g(x)\,u,\qquad x\in\mathcal X\subseteq\mathbb R^n,\quad u\in\mathcal U\subseteq\mathbb R^m, \tag{1}$$</div>
+  <p>where $\mathcal U$ is a compact set encoding actuator limits and $f,g$ are locally Lipschitz. For a state-feedback policy $\pi:\mathcal X\to\mathcal U$, the closed-loop vector field is $f_\pi(x):=f(x)+g(x)\pi(x)$, and $\Phi_\pi(x_0,t)$ denotes its flow: the state at time $t$ starting from $x_0$.</p>
+  <p>Safety is specified by a <strong>safe set</strong> $\mathcal S:=\{x\in\mathcal X: h_{\mathcal S}(x)\ge 0\}$ with $h_{\mathcal S}$ continuously differentiable. The complement $\mathcal F:=\mathcal X\setminus\mathcal S$ is the <strong>failure set</strong>.</p>
+
+  <h3>Reinforcement learning</h3>
+  <p>The task is a Markov decision process $(\mathcal X,\mathcal U,F,r,\gamma)$ with deterministic transitions $x_{k+1}=F(x_k,u_k)$, reward $r$, and discount $\gamma\in(0,1)$. A neural policy $\pi_\phi$ maximizes</p>
+  <div class="eq">$$J(\pi_\phi)=\mathbb E\Big[\sum_{k=0}^{\infty}\gamma^k r(x_k,u_k)\Big],\qquad Q^{\pi_\phi}_\gamma(x,u)=r(x,u)+\gamma\,Q^{\pi_\phi}_\gamma\big(F(x,u),\pi_\phi(F(x,u))\big),$$</div>
+  <p>with $x_0\sim\rho_0$ and $x_{k+1}=F(x_k,\pi_\phi(x_k))$.</p>
+
+  <div class="env rem">
+    <p class="env-title">Remark 3.1 <span>(sampled data)</span></p>
+    <p>The policy is evaluated at sample times $t_k=k\Delta t$ and its output is held by zero-order hold (ZOH), so $F$ is the exact ZOH dynamics of (1) over one sampling interval. The guarantees below are for this sampled-data discrete system. Under standard Lipschitz regularity and a sufficiently fast control rate, BCBF conditions enforced at the sample instants imply continuous-time safety of the ZOH trajectory.</p>
+  </div>
+</section>
+
+<!-- ================================================================== 2 -->
+<section id="cbf">
+  <h2><span class="secnum">2</span>Control invariance and control barrier functions</h2>
+  <p>Not every state in $\mathcal S$ is safe in the dynamical sense: under bounded inputs, some states inside $\mathcal S$ inevitably leave it. Safe control therefore looks for an invariant subset of $\mathcal S$.</p>
+  <div class="env def">
+    <p class="env-title">Definition C.1 <span>(control invariance)</span></p>
+    <p>A set $\mathcal I\subseteq\mathcal S$ is control-invariant if there is a feedback policy $\pi:\mathcal X\to\mathcal U$ such that every closed-loop trajectory with $x(0)\in\mathcal I$ satisfies $x(t)\in\mathcal I$ for all $t\ge 0$.</p>
+  </div>
+  <div class="env def">
+    <p class="env-title">Definition C.2 <span>(control barrier function)</span></p>
+    <p>A continuously differentiable $h_{\mathcal C}$ is a CBF for $\mathcal C:=\{x:h_{\mathcal C}(x)\ge0\}\subseteq\mathcal S$ if, for an extended class-$\mathcal K_\infty$ function $\alpha$ and all $x\in\mathcal C$,</p>
+    <div class="eq">$$\sup_{u\in\mathcal U}\Big[\nabla h_{\mathcal C}(x)^\top\big(f(x)+g(x)u\big)+\alpha\big(h_{\mathcal C}(x)\big)\Big]\ \ge\ 0. \tag{20}$$</div>
+  </div>
+  <p>This makes the admissible set $\mathbb K_{\mathcal C}(x):=\{u\in\mathcal U:\nabla h_{\mathcal C}(x)^\top(f(x)+g(x)u)+\alpha(h_{\mathcal C}(x))\ge0\}$ nonempty. A CBF safety filter minimally modifies a nominal input,</p>
+  <div class="eq">$$u_{\text{safe}}(x)=\arg\min_{u\in\mathcal U}\ \|u-u_{\text{nom}}\|_2^2\quad\text{s.t.}\quad \nabla h_{\mathcal C}(x)^\top\big(f(x)+g(x)u\big)+\alpha\big(h_{\mathcal C}(x)\big)\ge 0, \tag{22–23}$$</div>
+  <p>a convex QP whenever $\mathcal U$ is convex, because the constraint is affine in $u$. If a locally Lipschitz policy satisfies $\pi(x)\in\mathbb K_{\mathcal C}(x)$ on $\mathcal C$, then $\mathcal C$ is forward invariant (Proposition C.1). <strong>The hard part is not using a CBF but finding one</strong> whose superlevel set is control-invariant under bounded inputs. Hamilton–Jacobi reachability computes maximal invariant sets but scales exponentially with $n$; sum-of-squares programs scale poorly with dimension and degree and are often conservative.</p>
+</section>
+
+<!-- ================================================================== 3 -->
+<section id="bcbf">
+  <h2><span class="secnum">3</span>Backup control barrier functions</h2>
+  <p>Backup CBFs (Chen et al., 2021; Gurriet et al., 2020) avoid synthesizing a global invariant set. They start from a small, known control-invariant <strong>base set</strong></p>
+  <div class="eq">$$\mathcal B:=\{x\in\mathcal X: h_{\mathcal B}(x)\ge 0\}\subseteq\mathcal S \tag{24}$$</div>
+  <p>with a certified base controller $\pi_{\mathcal B}$, and a deterministic <strong>backup policy</strong> $\pi_b$ that agrees with $\pi_{\mathcal B}$ on $\mathcal B$.</p>
+  <div class="env def">
+    <p class="env-title">Definition 2.1 <span>(backup-induced control-invariant set)</span></p>
+    <p>$\mathcal C_T(\pi_b)$ is the set of all states from which $\pi_b$ recovers to $\mathcal B$ within the backup horizon $T$ while keeping the trajectory in $\mathcal S$:</p>
+    <div class="eq">$$\begin{aligned}\mathcal C_T(\pi_b)&amp;=\mathcal R\big(\mathcal B,\mathcal S,f_{\pi_b},T\big)\\ &amp;:=\big\{x\in\mathcal X:\ \Phi_{\pi_b}(x,T)\in\mathcal B\ \wedge\ \Phi_{\pi_b}(x,t')\in\mathcal S\ \ \forall t'\in[0,T]\big\}.\end{aligned} \tag{2}$$</div>
+  </div>
+  <div class="env prop">
+    <p class="env-title">Proposition C.2 <span>(backup-induced invariance)</span></p>
+    <p>If $\mathcal B$ is control-invariant under $\pi_{\mathcal B}$ and $\pi_b=\pi_{\mathcal B}$ on $\mathcal B$, then $\mathcal B\subseteq\mathcal C_T(\pi_b)\subseteq\mathcal S$ and $\mathcal C_T(\pi_b)$ is control-invariant. <span class="ref">[Chen et al., Thm. 1]</span></p>
+  </div>
+  <p>The set is the zero-superlevel set of an <em>implicit</em> CBF, evaluated by simulation rather than stored:</p>
+  <div class="eq">$$h_{\mathcal C_T}(x)=\min\Big\{\min_{t'\in[0,T]} h_{\mathcal S}\big(\Phi_{\pi_b}(x,t')\big),\ h_{\mathcal B}\big(\Phi_{\pi_b}(x,T)\big)\Big\}. \tag{3}$$</div>
+  <h3>From the implicit barrier to affine constraints</h3>
+  <p>The $\min$ in (3) is nonsmooth, so BCBF enforces sufficient CBF inequalities pointwise along the backup rollout and at the horizon. Let the flow sensitivity be</p>
+  <div class="eq">$$\Psi_{\pi_b}(x,t'):=\frac{\partial\Phi_{\pi_b}(x,t')}{\partial x},\qquad \frac{d}{dt'}\Psi_{\pi_b}(x,t')=\frac{\partial f_{\pi_b}}{\partial x}\big(\Phi_{\pi_b}(x,t')\big)\,\Psi_{\pi_b}(x,t'),\quad \Psi_{\pi_b}(x,0)=I. \tag{28–29}$$</div>
+  <p>For a candidate current input $u$, the rollout and terminal derivative terms are</p>
+  <div class="eq">$$\begin{aligned}
+    \mathcal D^{\mathcal S}_{t'}(x,u)&amp;:=\nabla h_{\mathcal S}\big(\Phi_{\pi_b}(x,t')\big)^{\!\top}\Big[\Psi_{\pi_b}(x,t')\big(f(x)+g(x)u\big)-f_{\pi_b}\big(\Phi_{\pi_b}(x,t')\big)\Big],\\
+    \mathcal D^{\mathcal B}_{T}(x,u)&amp;:=\nabla h_{\mathcal B}\big(\Phi_{\pi_b}(x,T)\big)^{\!\top}\,\Psi_{\pi_b}(x,T)\big(f(x)+g(x)u\big).
+  \end{aligned}\tag{30–31}$$</div>
+  <p>The subtraction in $\mathcal D^{\mathcal S}_{t'}$ appears because the rollout constraints are indexed by <em>future</em> time: as real time advances, the same future point on the backup rollout moves closer at rate $f_{\pi_b}$. The terminal condition uses the fixed horizon $T$, so it has no such term. Given extended class-$\mathcal K_\infty$ functions $\alpha_{\mathcal S},\alpha_{\mathcal B}$, the <strong>BCBF-admissible input set</strong> is</p>
+  <div class="eq">$$\begin{aligned}\mathbb K_{\mathrm{BCBF}}(x;\pi_b):=\Big\{u\in\mathcal U:\ &amp;\mathcal D^{\mathcal S}_{t'}(x,u)+\alpha_{\mathcal S}\big(h_{\mathcal S}(\Phi_{\pi_b}(x,t'))\big)\ge0\ \ \ \forall t'\in[0,T],\\ &amp;\mathcal D^{\mathcal B}_{T}(x,u)+\alpha_{\mathcal B}\big(h_{\mathcal B}(\Phi_{\pi_b}(x,T))\big)\ge 0\Big\}.\end{aligned} \tag{6}$$</div>
+  <p>For fixed $x$ and $\pi_b$, the rollout and its sensitivity are constants with respect to $u$, so <strong>every constraint is affine in $u$</strong>, and $\mathbb K_{\mathrm{BCBF}}(x;\pi_b)$ is convex whenever $\mathcal U$ is.</p>
+  <div class="env prop">
+    <p class="env-title">Proposition C.3 <span>(BCBF feasibility and safety)</span></p>
+    <p>For every $x\in\mathcal C_T(\pi_b)$, the set $\mathbb K_{\mathrm{BCBF}}(x;\pi_b)$ is nonempty; in particular $\pi_b(x)\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b)$. Any locally Lipschitz policy with $\pi(x)\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b)$ on $\mathcal C_T(\pi_b)$ renders $\mathcal C_T(\pi_b)$ forward invariant, and hence keeps the trajectory in $\mathcal S$. <span class="ref">[Chen et al., Thm. 2]</span></p>
+  </div>
+  <p>BCBFs also sidestep high relative degree. The composed functions $h_{\mathcal S}\circ\Phi_{\pi_b}(\cdot,t')$ depend on the current input through $\Psi_{\pi_b}(x,t')g(x)$, and under mild controllability conditions they have relative degree one for positive rollout times. Safety can therefore be written directly in physical coordinates, such as altitude or lane position, without high-order CBF constructions.</p>
+  <p class="callout"><strong>The remaining difficulty.</strong> BCBF moves the burden from synthesizing an invariant set to designing a backup policy, and the size of $\mathcal C_T(\pi_b)$ depends critically on that policy. Hand-designed backups such as LQR are easy to certify but recover only a small part of the safe region. PS2-RL learns the backup instead.</p>
+</section>
+
+<!-- ================================================================== 4 -->
+<section id="problem">
+  <h2><span class="secnum">4</span>Problem formulation and decomposition</h2>
+  <div class="env def">
+    <p class="env-title">Problem 1 <span>(PS2-RL formulation)</span></p>
+    <p>Given system (1) with ZOH discretization $F$, a safe set $\mathcal S$, an admissible input set $\mathcal U$, an initial distribution $\rho_0$ supported on $\mathcal X_0\subseteq\mathcal S$, a reward $r$ and $\gamma\in(0,1)$, find</p>
+    <div class="eq">$$\begin{aligned}\max_{\pi}\ \ &amp; J(\pi)=\mathbb E_{\substack{x_0\sim\rho_0,\ u_k=\pi(x_k)\\ x_{k+1}=F(x_k,u_k)}}\Big[\sum_{k=0}^{\infty}\gamma^k r(x_k,u_k)\Big]\\ \text{s.t.}\ \ &amp; x_k\in\mathcal S,\ \ u_k\in\mathcal U,\quad\forall k\ge 0,\ \forall x_0\in\mathcal X_0.\end{aligned} \tag{5}$$</div>
+  </div>
+  <p>Let $\Pi_{\text{safe}}$ be the feasible policy class of Problem 1: the constraints hold pointwise in $k$, for every trajectory and every initial state in $\mathcal X_0$. A policy is <strong>provably safe</strong> if it provably belongs to $\Pi_{\text{safe}}$. Constrained policy optimization methods (CMDPs, state-wise safe RL) may use similar formulations, but they do not certify membership in $\Pi_{\text{safe}}$.</p>
+
+  <h3>Subproblem 1: optimize under a fixed backup policy</h3>
+  <div class="env def">
+    <p class="env-title">Subproblem 1 <span>(BCBF-constrained policy optimization)</span></p>
+    <p>Fix a backup policy $\pi_b$ and horizon $T$, and assume $\mathcal X_0\subseteq\mathcal C_T(\pi_b)$. Find</p>
+    <div class="eq">$$\max_{\pi_\phi}\ J(\pi_\phi)\quad\text{s.t.}\quad \pi_\phi(x)\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b)\quad\forall x\in\mathcal C_T(\pi_b). \tag{7}$$</div>
+  </div>
+  <div class="env rem">
+    <p class="env-title">Remark 4.1 <span>(finite mesh)</span></p>
+    <p>In practice the constraints are enforced on a relative-time mesh $0=t'_0&lt;t'_1&lt;\dots&lt;t'_N=T$. Under standard Lipschitz regularity and Remark 3.1, sampled BCBF enforcement at the instants $t_k$ implies continuous-time safety of the ZOH trajectory.</p>
+  </div>
+
+  <h3>Subproblem 2: enlarge the certified set</h3>
+  <p>The conservatism of Subproblem 1 is governed by $\mathcal C_T(\pi_b)$. PS2-RL anchors the backup policy to a certified base pair and learns only the part outside it:</p>
+  <div class="eq">$$\pi_b(x)=\begin{cases}\pi_{\mathcal B}(x), &amp; x\in\mathcal B,\\ \pi_{\mathrm{SA}}(x), &amp; x\notin\mathcal B.\end{cases} \tag{8}$$</div>
+  <p>Here $\pi_{\mathcal B}:\mathcal B\to\mathcal U$ renders $\mathcal B$ forward invariant, and the <strong>safe-arrival policy</strong> $\pi_{\mathrm{SA}}:\mathcal X\setminus\mathcal B\to\mathcal U$ steers states into $\mathcal B$ within $T$ while staying in $\mathcal S$. Only $(\mathcal B,\pi_{\mathcal B})$ must be certified; $\pi_{\mathrm{SA}}$ need not be.</p>
+
+  <div class="env asm" id="asm-4-1">
+    <p class="env-title">Assumption 4.1 <span>(local stabilizability)</span></p>
+    <p>There exist $x^\star\in\operatorname{int}(\mathcal S)$ and $u^\star\in\operatorname{int}(\mathcal U)$ such that (a) $f(x^\star)+g(x^\star)u^\star=0$, and (b) the linearization $(A,B)$ of (1) about $(x^\star,u^\star)$, with $A=\partial(f+gu^\star)/\partial x\,|_{x=x^\star}$ and $B=g(x^\star)$, is locally stabilizable.</p>
+  </div>
+  <div class="env thm" id="thm-4-1">
+    <p class="env-title">Theorem 4.1 <span>(existence of a certified local base set)</span></p>
+    <p>Under Assumption 4.1 there exist a gain $K\in\mathbb R^{m\times n}$, a matrix $P\succ0$ and $\bar c&gt;0$ such that $\pi_{\mathcal B}(x)=u^\star-K(x-x^\star)$ and $\mathcal B_c=\{x:(x-x^\star)^\top P(x-x^\star)\le c\}$, $c\in(0,\bar c]$, satisfy: (i) $\mathcal B_c\subseteq\mathcal S$; (ii) $\pi_{\mathcal B}(x)\in\mathcal U$ for all $x\in\mathcal B_c$; (iii) $\mathcal B_c$ is control-invariant under $\pi_{\mathcal B}$; (iv) every trajectory with $x(0)\in\mathcal B_c$ stays in $\mathcal B_c$ and converges to $x^\star$.</p>
+  </div>
+  <details class="proof">
+    <summary>Proof sketch</summary>
+    <p>Pick $K$ with $A-BK$ Hurwitz and any $Q\succ0$; the Lyapunov equation $(A-BK)^\top P+P(A-BK)=-Q$ has a unique solution $P\succ0$. With $e=x-x^\star$ and $V(e)=e^\top Pe$, a Taylor expansion of the closed loop gives $\dot e=(A-BK)e+\rho(e)$ with $\|\rho(e)\|=o(\|e\|)$, so $\dot V\le-\tfrac12\lambda_{\min}(Q)\|e\|^2&lt;0$ on a small ball. That yields invariance and convergence on a sublevel set $V\le c_1$. Since $x^\star\in\operatorname{int}(\mathcal S)$ and $u^\star\in\operatorname{int}(\mathcal U)$, smaller levels $c_2,c_3$ give $\mathcal B_c\subseteq\mathcal S$ and $\pi_{\mathcal B}(\mathcal B_c)\subseteq\mathcal U$. Take $\bar c=\min\{c_1,c_2,c_3\}$.</p>
+  </details>
+  <p>So any stabilizing linear feedback (pole placement, LQR, …) followed by a sublevel-set check for input feasibility and $\mathcal S$-containment produces a valid base pair, with no global search. With $(\mathcal B,\pi_{\mathcal B})$ fixed, $\mathcal C_T$ grows with $T$, but so does the number of constraints. A better safe-arrival policy enlarges it at a fixed horizon instead:</p>
+  <div class="env def">
+    <p class="env-title">Subproblem 2 <span>(safe-arrival set maximization)</span></p>
+    <p>Given $(\mathcal B,\pi_{\mathcal B})$ from Theorem 4.1, a horizon $T&gt;0$, a compact design region $\Omega\subseteq\mathcal S$ and a finite measure $\mu$ on $\Omega\setminus\mathcal B$, find</p>
+    <div class="eq">$$\max_{\pi^\theta_{\mathrm{SA}}}\ \mu_{\mathrm{SA}}\big(\pi^\theta_{\mathrm{SA}};\Omega,\mathcal B\big):=\mu\big(\mathcal C_T(\pi^\theta_b)\cap(\Omega\setminus\mathcal B)\big)\quad\text{s.t.}\quad \pi^\theta_b(x)=\begin{cases}\pi_{\mathcal B}(x), &amp; x\in\mathcal B,\\ \pi^\theta_{\mathrm{SA}}(x), &amp; x\notin\mathcal B.\end{cases} \tag{9}$$</div>
+  </div>
+
+  <h3>The decomposition is certified</h3>
+  <p>For a fixed backup policy define the BCBF-feasible class $\Pi_{\mathrm{BCBF}}(\pi_b):=\{\pi:\mathcal X\to\mathcal U:\ \pi(x)\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b)\ \forall x\in\mathcal C_T(\pi_b)\}$.</p>
+  <div class="env thm" id="thm-4-2">
+    <p class="env-title">Theorem 4.2 <span>(certified decomposition and exactness)</span></p>
+    <p>Suppose $(\mathcal B,\pi_{\mathcal B})$ satisfies Theorem 4.1, let $\pi_b^\star$ solve Subproblem 2 and $\pi_\phi^\star$ solve Subproblem 1 with $\pi_b^\star$, and assume the exact constraints (6) are enforced. Then</p>
+    <ol class="plain">
+      <li>$\Pi_{\mathrm{BCBF}}(\pi_b^\star)\subseteq\Pi_{\text{safe}}$, so $\pi_\phi^\star$ is feasible for Problem 1;</li>
+      <li>$J(\pi_\phi^\star)=\sup_{\pi\in\Pi_{\mathrm{BCBF}}(\pi_b^\star)}J(\pi)\le\sup_{\pi\in\Pi_{\text{safe}}}J(\pi)$;</li>
+      <li>if some globally optimal safe policy $\pi^\star_{\text{safe}}$ lies in $\Pi_{\mathrm{BCBF}}(\pi_b^\star)$, then $\pi_\phi^\star$ is globally optimal for Problem 1.</li>
+    </ol>
+    <p>The two subproblems thus solve a certified inner approximation of Problem 1, and solve it exactly whenever the learned backup induces a feasible class containing an optimal safe policy.</p>
+  </div>
+  <details class="proof">
+    <summary>Proof sketch</summary>
+    <p>(i) Take $\pi\in\Pi_{\mathrm{BCBF}}(\pi_b^\star)$ and $x_0\in\mathcal X_0\subseteq\mathcal C_T(\pi_b^\star)$. The pointwise BCBF inequalities along the rollout and at the horizon are sufficient for the CBF condition on $h_{\mathcal C_T}$ (Chen et al., Prop. 2), so $\mathcal C_T(\pi_b^\star)\subseteq\mathcal S$ is forward invariant, and $\mathbb K_{\mathrm{BCBF}}\subseteq\mathcal U$ keeps the inputs admissible. (ii) follows from the definition of Subproblem 1 and (i). (iii) $J(\pi_\phi^\star)\ge J(\pi^\star_{\text{safe}})$ because $\pi_\phi^\star$ is optimal over a class containing $\pi^\star_{\text{safe}}$, and $J(\pi_\phi^\star)\le J(\pi^\star_{\text{safe}})$ by (i).</p>
+  </details>
+</section>
+
+<!-- ================================================================== 5 -->
+<section id="sav">
+  <h2><span class="secnum">5</span>The safe-arrival value function</h2>
+  <p>Subproblem 2 needs an RL objective whose optimum enlarges $\mathcal C_T$. PS2-RL uses an indicator-style value that represents the reach-avoid <em>event</em> directly, rather than a dense geometric surrogate. Consider the deterministic system $x_{k+1}=F(x_k,u_k)$ with base set $\mathcal B$, failure set $\mathcal F=\mathcal X\setminus\mathcal S$, and <strong>continuation set</strong> $\mathcal H:=\mathcal X\setminus(\mathcal B\cup\mathcal F)$, assuming $\mathcal B\cap\mathcal F=\varnothing$. The indicators are</p>
+  <div class="eq">$$\mathbf b(x)=\mathbf 1_{\mathcal B}(x),\qquad \mathbf f(x)=\mathbf 1_{\mathcal F}(x),\qquad \mathbf c(x)=1-\mathbf b(x)-\mathbf f(x)=\mathbf 1_{\mathcal H}(x). \tag{38}$$</div>
+  <p>For a pair $(x,u)$ and a policy $\pi$, the rollout is $x_0=x$, $u_0=u$, $x_{k+1}=F(x_k,u_k)$ and $u_k=\pi(x_k)$ for $k\ge1$. The hitting times and the safe-arrival event are</p>
+  <div class="eq">$$\begin{gathered}\tau_{\mathcal B}=\inf\{k\ge0:x_k\in\mathcal B\},\qquad \tau_{\mathcal F}=\inf\{k\ge0:x_k\in\mathcal F\},\\ E_{\mathrm{SA}}:=\{\tau_{\mathcal B}&lt;\tau_{\mathcal F},\ \tau_{\mathcal B}&lt;\infty\}.\end{gathered} \tag{42–43}$$</div>
+  <p>Probability and expectation notation is kept even though the deterministic case gives laws concentrated on a single trajectory: the construction extends unchanged to stochastic dynamics and policies.</p>
+
+  <h3 id="sav-undiscounted">Undiscounted value: feasibility</h3>
+  <div class="env def">
+    <p class="env-title">Definition D.1 <span>(undiscounted safe-arrival value)</span></p>
+    <div class="eq">$$Q^\pi_{\mathrm{SA}}(x,u):=\mathbb P^\pi_{x,u}\big(\tau_{\mathcal B}&lt;\tau_{\mathcal F},\ \tau_{\mathcal B}&lt;\infty\big),\qquad V^\pi_{\mathrm{SA}}(x):=Q^\pi_{\mathrm{SA}}(x,\pi(x)). \tag{44–45}$$</div>
+  </div>
+  <div class="env prop">
+    <p class="env-title">Propositions D.1–D.2 <span>(indicator form, self-consistency)</span></p>
+    <div class="eq">$$\begin{gathered}Q^\pi_{\mathrm{SA}}(x,u)=\mathbb E^\pi_{x,u}\Big[\sum_{k=0}^{\infty}\Big(\prod_{i=0}^{k-1}\mathbf c(x_i)\Big)\mathbf b(x_k)\Big],\\ Q^\pi_{\mathrm{SA}}(x,u)=\mathbf b(x)+\mathbf c(x)\,Q^\pi_{\mathrm{SA}}\big(F(x,u),\pi(F(x,u))\big).\end{gathered} \tag{46, 49}$$</div>
+    <p>The product is a <em>survival gate</em>: it equals 1 only while the rollout stays in $\mathcal H$, so exactly one term, at $k=\tau_{\mathcal B}$, survives on the safe-arrival event and the sum is its indicator.</p>
+  </div>
+  <p>The optimal values satisfy $Q^\star_{\mathrm{SA}}(x,u)=\mathbf b(x)+\mathbf c(x)\max_{u^+}Q^\star_{\mathrm{SA}}(F(x,u),u^+)$, and they define the region where safe arrival is possible at all.</p>
+  <div class="env def">
+    <p class="env-title">Definitions D.2–D.3 <span>(safe-arrival region, minimum arrival time)</span></p>
+    <div class="eq">$$\begin{gathered}\mathcal R_{\mathrm{SA}}:=\{x:V^\star_{\mathrm{SA}}(x)=1\},\\ d(x):=\inf\Big\{k:\exists\,(u_0,\dots,u_{k-1})\ \text{with}\ x_i\in\mathcal H\ \forall i&lt;k,\ x_k\in\mathcal B\Big\}.\end{gathered} \tag{58–59}$$</div>
+  </div>
+  <div class="env prop">
+    <p class="env-title">Proposition D.3 <span>(finite-step characterization)</span></p>
+    <p>With $\mathcal R_0:=\mathcal B$ and $\mathcal R_{n+1}:=\mathcal R_n\cup\{x\in\mathcal H:\exists u\in\mathcal U,\ F(x,u)\in\mathcal R_n\}$,</p>
+    <div class="eq">$$\mathcal R_{\mathrm{SA}}=\bigcup_{n\ge0}\mathcal R_n=\{x:d(x)&lt;\infty\},\qquad d(x)=\min\{n\ge0:x\in\mathcal R_n\}\ \ \text{for }x\in\mathcal R_{\mathrm{SA}}. \tag{62–63}$$</div>
+  </div>
+
+  <h3 id="sav-discounted">Discounted value: what PS2-RL trains</h3>
+  <div class="env def">
+    <p class="env-title">Definition 4.1 <span>(safe-arrival value function)</span></p>
+    <p>For a deterministic safe-arrival policy $\pi_{\mathrm{SA}}$ and $\beta\in(0,1)$,</p>
+    <div class="eq">$$Q^{\pi_{\mathrm{SA}}}_{\mathrm{SA},\beta}(x,u):=\mathbb E^{\pi_{\mathrm{SA}}}_{x,u}\Big[\sum_{k=0}^{\infty}\beta^k\Big(\prod_{\tau=0}^{k-1}\mathbf c(x_\tau)\Big)\mathbf b(x_k)\Big],\qquad V^{\pi_{\mathrm{SA}}}_{\mathrm{SA},\beta}(x):=Q^{\pi_{\mathrm{SA}}}_{\mathrm{SA},\beta}\big(x,\pi_{\mathrm{SA}}(x)\big), \tag{10}$$</div>
+    <p>with the empty product equal to 1.</p>
+  </div>
+  <div class="env prop">
+    <p class="env-title">Proposition D.4 <span>(two interpretations)</span></p>
+    <div class="eq">$$Q^{\pi}_{\mathrm{SA},\beta}(x,u)=\mathbb E^\pi_{x,u}\Big[\beta^{\tau_{\mathcal B}}\,\mathbf 1\{\tau_{\mathcal B}&lt;\tau_{\mathcal F},\ \tau_{\mathcal B}&lt;\infty\}\Big]=\big(\mathbb P^\pi_{x,u}\otimes\mathbb P_N\big)\big(\tau_{\mathcal B}&lt;\tau_{\mathcal F},\ \tau_{\mathcal B}\le N\big), \tag{66, 68}$$</div>
+    <p>where $N$ is an independent geometric horizon, $\mathbb P_N(N=k)=(1-\beta)\beta^k$. Under deterministic dynamics the value is $\beta^{N}$ if the rollout reaches $\mathcal B$ safely in exactly $N$ steps and $0$ otherwise. $\beta$ acts as an urgency parameter.</p>
+  </div>
+  <div class="env prop">
+    <p class="env-title">Proposition D.5 <span>(self-consistency)</span> and the Bellman equation</p>
+    <div class="eq">$$Q^{\pi_{\mathrm{SA}}}_{\mathrm{SA},\beta}(x,u)=\mathbf b(x)+\beta\,\mathbf c(x)\,Q^{\pi_{\mathrm{SA}}}_{\mathrm{SA},\beta}\big(F(x,u),\pi_{\mathrm{SA}}(F(x,u))\big), \tag{11}$$</div>
+    <div class="eq">$$Q^\star_{\mathrm{SA},\beta}(x,u)=\mathbf b(x)+\beta\,\mathbf c(x)\max_{u^+\in\mathcal U}Q^\star_{\mathrm{SA},\beta}\big(F(x,u),u^+\big). \tag{81}$$</div>
+    <p>The operator $(\mathcal T_\beta Q)(x,u):=\mathbf b(x)+\beta\mathbf c(x)\max_{u^+}Q(F(x,u),u^+)$ is a $\beta$-contraction in the sup norm, since $|\mathcal T_\beta Q_1-\mathcal T_\beta Q_2|\le\beta\,\mathbf c(x)\max_{u^+}|Q_1-Q_2|\le\beta\|Q_1-Q_2\|_\infty$. The Bellman equation therefore has the unique bounded fixed point $Q^\star_{\mathrm{SA},\beta}$, and standard value-based and actor–critic RL applies.</p>
+  </div>
+  <div class="env prop">
+    <p class="env-title">Proposition D.6 <span>(discounting preserves feasibility)</span></p>
+    <div class="eq">$$Q^\pi_{\mathrm{SA}}(x,u)=1\iff Q^\pi_{\mathrm{SA},\beta}(x,u)&gt;0,\qquad \lim_{\beta\uparrow1}Q^\pi_{\mathrm{SA},\beta}(x,u)=Q^\pi_{\mathrm{SA}}(x,u). \tag{86–87}$$</div>
+  </div>
+  <div class="env thm" id="prop-d-7">
+    <p class="env-title">Proposition D.7 <span>(arrival-time optimality)</span></p>
+    <div class="eq">$$\begin{gathered}V^\star_{\mathrm{SA},\beta}(x)=\begin{cases}\beta^{d(x)}, &amp; d(x)&lt;\infty,\\ 0, &amp; d(x)=\infty,\end{cases}\\[6pt] Q^\star_{\mathrm{SA},\beta}(x,u)=\begin{cases}1, &amp; x\in\mathcal B,\\ \beta^{1+d(F(x,u))}, &amp; x\in\mathcal H,\ d(F(x,u))&lt;\infty,\\ 0, &amp; \text{otherwise.}\end{cases}\end{gathered} \tag{89–90}$$</div>
+    <p>Consequently $\mathcal R_{\mathrm{SA}}=\{x:V^\star_{\mathrm{SA}}(x)=1\}=\{x:d(x)&lt;\infty\}=\{x:V^\star_{\mathrm{SA},\beta}(x)&gt;0\}$ for every $\beta\in(0,1)$, and $V^\star_{\mathrm{SA},\beta}\to V^\star_{\mathrm{SA}}$ as $\beta\uparrow1$.</p>
+  </div>
+
+  <h3 id="sav-actions">What optimal safe-arrival actions do</h3>
+  <p>Partition the state space as $\mathcal X=\mathcal B\,\dot\cup\,\mathcal F\,\dot\cup\,(\mathcal R_{\mathrm{SA}}\cap\mathcal H)\,\dot\cup\,(\mathcal H\setminus\mathcal R_{\mathrm{SA}})$ (Proposition D.8):</p>
+  <ul>
+    <li>In $\mathcal B$ both values equal 1, and in $\mathcal F$ both equal 0; every action is equivalent.</li>
+    <li>In $\mathcal R_{\mathrm{SA}}\cap\mathcal H$, an action is optimal for the undiscounted value iff $F(x,u)\in\mathcal R_{\mathrm{SA}}$: it preserves feasibility but does not rank arrival times. It is optimal for the discounted value iff additionally $d(F(x,u))=d(x)-1$, so <strong>a discounted-optimal policy reaches $\mathcal B$ in exactly $d(x)$ steps</strong>.</li>
+    <li>In $\mathcal H\setminus\mathcal R_{\mathrm{SA}}$ no policy can safely arrive, and both values are 0.</li>
+  </ul>
+  <p class="callout">The undiscounted value supplies the <strong>feasibility semantics</strong> ($\mathcal R_{\mathrm{SA}}$). The discounted value preserves that region and adds a contraction-based, <strong>time-sensitive</strong> training signal (Remark D.1).</p>
+</section>
+
+<!-- ================================================================== 6 -->
+<section id="phase1">
+  <h2><span class="secnum">6</span>Phase I: training the safe-arrival policy</h2>
+  <p>With a design distribution $\rho_{\mathrm{arr}}$ supported on $\Omega\setminus\mathcal B$, Phase I solves</p>
+  <div class="eq">$$\max_\theta\ J_{\mathrm{SA},\beta}(\theta):=\mathbb E_{x\sim\rho_{\mathrm{arr}}}\Big[Q^{\pi^\theta_{\mathrm{SA}}}_{\mathrm{SA},\beta}\big(x,\pi^\theta_{\mathrm{SA}}(x)\big)\Big]. \tag{12}$$</div>
+  <div class="env alg">
+    <p class="env-title">Algorithm 1 <span>(safe-arrival policy training)</span></p>
+    <ol class="algo">
+      <li>Initialize the safe-arrival policy parameters $\theta$ and the value/Q-function parameters.</li>
+      <li>Repeat until converged: sample $x_0\sim\rho_{\mathrm{arr}}$, and collect rollouts under $\pi^\theta_{\mathrm{SA}}$ until $x_k\in\mathcal B$ or $x_k\in\mathcal F$ (first-hit termination);</li>
+      <li>label each $x_k$ with $\mathbf b(x_k)$, $\mathbf f(x_k)$, $\mathbf c(x_k)=1-\mathbf b(x_k)-\mathbf f(x_k)$;</li>
+      <li>update the value/Q estimator with the Bellman recursion (11), and improve $\theta$ with the chosen RL backbone.</li>
+      <li>Return $\pi^\theta_{\mathrm{SA}}$ and freeze the composed backup policy $\pi^\theta_b$ for Phase II.</li>
+    </ol>
+  </div>
+  <p>The only ingredients specific to safe arrival are the indicators, first-hit termination, and objective (12); everything else comes from the RL backbone (actor–critic, Q-learning, fitted value iteration, …). In the experiments, a TD3-style off-policy backbone with twin critics trained by the recursion (11) under a Huber loss is used, with $\beta=0.92$ (unicycle) and $\beta=0.99$ (quadrotor). A mild curriculum that expands $\rho_{\mathrm{arr}}$ outward from $\mathcal B$ is an optimization heuristic, not a requirement.</p>
+</section>
+
+<!-- ================================================================== 7 -->
+<section id="cil">
+  <h2><span class="secnum">7</span>Phase II: the control-invariant layer</h2>
+  <p>PS2-RL builds on HardNet-CVX (Min &amp; Azizan), which projects a network's output onto a state-dependent convex set through a differentiable optimization layer.</p>
+  <div class="env def">
+    <p class="env-title">Definition 2.2 <span>(constraint projection layer)</span></p>
+    <div class="eq">$$\mathcal P(\pi_\phi)(x)=\arg\min_u\ \|u-\pi_\phi(x)\|_2^2\quad\text{s.t.}\quad u\in\mathbb K(x). \tag{4}$$</div>
+  </div>
+  <p>With $\pi^\star_{\mathrm{SA}}$ from Phase I, freeze $\pi_b^\star(x)=\pi_{\mathcal B}(x)$ on $\mathcal B$ and $\pi_b^\star(x)=\pi^\star_{\mathrm{SA}}(x)$ otherwise. Then $\mathcal C_T(\pi_b^\star)$ and $\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star)$ are fixed, and the latter is convex for every $x$ when $\mathcal U$ is.</p>
+  <div class="env def">
+    <p class="env-title">Definitions 4.2–4.3 <span>(control-invariant layer, PS2 policy)</span></p>
+    <div class="eq">$$\begin{gathered}\mathcal P_{\mathrm{CIL}}(\pi_\phi)(x):=\arg\min_u\ \|u-\pi_\phi(x)\|_2^2\quad\text{s.t.}\quad u\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star),\\ \pi^\phi_{\mathrm{PS2}}(x;\pi_b^\star):=\mathcal P_{\mathrm{CIL}}(\pi_\phi)(x).\end{gathered} \tag{13–14}$$</div>
+  </div>
+  <p>This reparameterization turns Subproblem 1 into unconstrained optimization over $\phi$, $\max_\phi J(\pi^\phi_{\mathrm{PS2}}(\cdot;\pi_b^\star))$, with gradients flowing through (13).</p>
+
+  <h3 id="cil-qp">The QP, explicitly</h3>
+  <p>Allow multiple constraints, $\mathcal S=\{x:h_{\mathcal S,j}(x)\ge0,\ j=1..n_{\mathcal S}\}$ and $\mathcal B=\{x:h_{\mathcal B,\ell}(x)\ge0,\ \ell=1..n_{\mathcal B}\}$, and a mesh $0=t'_0&lt;\dots&lt;t'_N=T$. For the current $x$ and the frozen $\pi_b^\star$, define</p>
+  <div class="eq">$$x^b_i:=\Phi_{\pi_b^\star}(x,t'_i),\qquad \Psi_i:=\frac{\partial\Phi_{\pi_b^\star}(x,t'_i)}{\partial x},\qquad f^b_i:=f_{\pi_b^\star}(x^b_i),\qquad f_0:=f(x),\ \ g_0:=g(x). \tag{109}$$</div>
+  <p>Each safety component and node gives an affine row $a^{\mathcal S\top}_{i,j}u\le b^{\mathcal S}_{i,j}$, and each terminal base-set component gives $a^{\mathcal B\top}_{\ell}u\le b^{\mathcal B}_{\ell}$, with</p>
+  <div class="eq">$$\begin{aligned}
+    a^{\mathcal S\top}_{i,j}&amp;=-\nabla h_{\mathcal S,j}(x^b_i)^\top\Psi_i\,g_0, &amp;\quad b^{\mathcal S}_{i,j}&amp;=\alpha_{\mathcal S}\big(h_{\mathcal S,j}(x^b_i)\big)+\nabla h_{\mathcal S,j}(x^b_i)^\top\big[\Psi_i f_0-f^b_i\big],\\
+    a^{\mathcal B\top}_{\ell}&amp;=-\nabla h_{\mathcal B,\ell}(x^b_N)^\top\Psi_N\,g_0, &amp;\quad b^{\mathcal B}_{\ell}&amp;=\alpha_{\mathcal B}\big(h_{\mathcal B,\ell}(x^b_N)\big)+\nabla h_{\mathcal B,\ell}(x^b_N)^\top\Psi_N f_0.
+  \end{aligned}\tag{112–117}$$</div>
+  <p>Stacking gives $A_{\mathrm{BCBF}}(x)u\le b_{\mathrm{BCBF}}(x)$ with $n_c=(N+1)n_{\mathcal S}+n_{\mathcal B}$ rows. With box limits $u_{\min}\le u\le u_{\max}$ written as $A_{\mathcal U}u\le b_{\mathcal U}$, the layer is the QP</p>
+  <div class="eq">$$\mathcal P_{\mathrm{CIL}}(\pi_\phi)(x)=\arg\min_u\ \|u-\pi_\phi(x)\|_2^2\quad\text{s.t.}\quad A_{\mathrm{BCBF}}(x)\,u\le b_{\mathrm{BCBF}}(x),\quad A_{\mathcal U}u\le b_{\mathcal U}. \tag{122}$$</div>
+  <h3>Numerical safeguard: a heavily penalized slack</h3>
+  <p>The implementation solves a slack-regularized version with a single scalar slack shared by the BCBF rows only. The input limits are never relaxed:</p>
+  <div class="eq">$$\begin{aligned}(u^\star,\delta^\star)=\arg\min_{u,\delta}\ \ &amp;\|u-\pi_\phi(x)\|_2^2+\lambda_\delta\,\delta^2\\ \text{s.t.}\ \ &amp;A_{\mathrm{BCBF}}(x)u-\mathbf 1_{n_c}\delta\le b_{\mathrm{BCBF}}(x),\ \ A_{\mathcal U}u\le b_{\mathcal U},\ \ \delta\ge0,\end{aligned} \tag{123}$$</div>
+  <p>with $\lambda_\delta=10^5$ (unicycle) and $10^6$ (quadrotor); the layer returns $u^\star$. The slack absorbs small artificial infeasibilities from the finite mesh, numerical integration and sampled-data implementation near $\partial\mathcal C_T$. The formal guarantees correspond to $\delta^\star=0$. In evaluation, mean and median slack are on the order of $10^{-5}$ or smaller, the 99th percentile is at most $5.1\times10^{-5}$, and $\delta&gt;10^{-4}$ never occurs on the unicycle and occurs on at most 0.088% of quadrotor steps (Table 7).</p>
+  <h3>Training through the layer</h3>
+  <p>All quantities that build $A_{\mathrm{BCBF}},b_{\mathrm{BCBF}}$ (backup rollout, sensitivity propagation, row construction) and the QP solve itself (qpax, a differentiable primal–dual interior-point solver) are differentiable JAX operations, so the actor gradient contains the QP solution:</p>
+  <div class="eq">$$\nabla_\phi\mathcal L_{\text{actor}}=\frac{\partial\mathcal L_{\text{actor}}}{\partial u^\star}\,\frac{\partial u^\star}{\partial u_{\text{nom}}}\,\frac{\partial u_{\text{nom}}}{\partial\phi}.$$</div>
+  <p>For a stochastic actor, the nominal action is sampled, $u^{\text{nom}}_k\sim\pi_\phi(\cdot\mid x_k)$, and then projected deterministically, $u_k=\mathcal P_{\mathrm{CIL}}(u^{\text{nom}}_k)(x_k)$. The environment and replay buffer only ever see projected controls, the actor loss evaluates the critic at the projected action, and target-policy actions in Bellman backups are projected too. This is the difference from a post-hoc shield: the projection is present during both data collection and gradient-based improvement.</p>
+
+  <div class="env thm" id="thm-4-3">
+    <p class="env-title">Theorem 4.3 <span>(safety guarantee of PS2-RL)</span></p>
+    <p>Suppose $(\mathcal B,\pi_{\mathcal B})$ satisfies Theorem 4.1, let $\pi_b^\star$ be the fixed composed backup policy, and assume $\mathcal X_0\subseteq\mathcal C_T(\pi_b^\star)$. Then for <strong>any</strong> policy $\pi_\phi$, the PS2 policy satisfies $\pi^\phi_{\mathrm{PS2}}\in\Pi_{\mathrm{BCBF}}(\pi_b^\star)\subseteq\Pi_{\text{safe}}$: every realized input satisfies $u_k\in\mathcal U$ and the sampled closed-loop trajectory satisfies $x_k\in\mathcal S$ for all $k\ge0$ and all $x_0\in\mathcal X_0$. Under the sampled-data conditions, the continuous-time ZOH trajectory remains in $\mathcal S$ as well.</p>
+  </div>
+  <details class="proof">
+    <summary>Proof</summary>
+    <p>For every $x\in\mathcal C_T(\pi_b^\star)$ the layer returns the projection of $\pi_\phi(x)$ onto $\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star)$, so $\pi^\phi_{\mathrm{PS2}}(x)\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star)$, which is the defining property of $\Pi_{\mathrm{BCBF}}(\pi_b^\star)$. The conclusion follows from Theorem 4.2(i).</p>
+  </details>
+
+  <div class="env thm" id="thm-4-4">
+    <p class="env-title">Theorem 4.4 <span>(universal approximation of PS2-RL)</span></p>
+    <p>Fix $\pi_b^\star$, assume $\mathcal U$ is convex, and let $\Omega\subseteq\mathcal C_T(\pi_b^\star)$ be compact. Let $C(\Omega,\mathcal U)$ carry the norm $\|\pi\|_\infty:=\sup_{x\in\Omega}\|\pi(x)\|_\infty$, and let $\mathcal G_{\mathrm{NN}}$ universally approximate $\mathcal G\subseteq C(\Omega,\mathcal U)$. Define</p>
+    <div class="eq">$$\begin{gathered}\Pi^{\mathcal G_{\mathrm{NN}}}_{\mathrm{PS2}}(\pi_b^\star;\Omega):=\{\mathcal P_{\mathrm{CIL}}(\pi_\phi):\pi_\phi\in\mathcal G_{\mathrm{NN}}\},\\ \Pi_{\mathrm{BCBF}}(\pi_b^\star;\Omega):=\{\pi\in\mathcal G:\pi(x)\in\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star)\ \forall x\in\Omega\}.\end{gathered} \tag{15–16}$$</div>
+    <p>Then $\Pi^{\mathcal G_{\mathrm{NN}}}_{\mathrm{PS2}}(\pi_b^\star;\Omega)$ universally approximates $\Pi_{\mathrm{BCBF}}(\pi_b^\star;\Omega)$ under $\|\cdot\|_\infty$. The same holds in $L^p(\Omega,\mathcal U)$.</p>
+  </div>
+  <details class="proof">
+    <summary>Proof sketch</summary>
+    <p>On $\Omega\subseteq\mathcal C_T(\pi_b^\star)$, $\mathbb K_{\mathrm{BCBF}}(x;\pi_b^\star)$ is nonempty (BCBF feasibility) and convex (affine rows, convex $\mathcal U$). So (13) is exactly a HardNet-CVX projection onto a state-dependent convex set, and the result follows from the HardNet-CVX universal approximation theorem (Min &amp; Azizan, Thm. 12).</p>
+  </details>
+  <p>Together, Theorems 4.3 and 4.4 say the layer enforces safety <em>without sacrificing expressivity</em>: every projected policy is safe, and projection preserves the approximation power of the chosen architecture over the BCBF-feasible class.</p>
+</section>
+
+<!-- ================================================================== 8 -->
+<section id="scale">
+  <h2><span class="secnum">8</span>Scalability and extensions</h2>
+  <p>PS2-RL reduces provably safe RL to rollouts and a control-space projection. The only object that must be certified is the local base pair $(\mathcal B,\pi_{\mathcal B})$, which Theorem 4.1 makes routine. The learned safe-arrival policy is certified implicitly: once frozen, rollouts extend the base set to $\mathcal C_T(\pi_b^\star)$ by construction.</p>
+  <ul>
+    <li><strong>Small QPs in high dimension.</strong> The layer has $m$ decision variables and $O(Nn_{\mathcal S}+n_{\mathcal B}+2m)$ affine rows, which grows linearly with the backup mesh and the number of constraints. Discretizing the Hamilton–Jacobi PDE instead costs exponentially in $n$.</li>
+    <li><strong>Architecture-agnostic.</strong> The layer is appended after any policy network, and Theorem 4.4 preserves universal approximation. Unlike post-hoc network verification, no specific network family is required.</li>
+    <li><strong>Differentiable simulators.</strong> The control-affine form is not essential. With a differentiable simulator $F_{\Delta t}$ and the candidate-input rollout $z_0(u)=F_{\Delta t}(x,u)$, $z_{i+1}(u)=F_{\Delta t}(z_i(u),\pi_b^\star(z_i(u)))$, each rollout condition $\ell_i(z_i(u))\ge0$ yields a local affine row
+      <span class="nowrap">$\ell_i(z_i(u_b))+a_i(x)^\top(u-u_b)\ge0$</span> with $a_i(x)=\nabla_u\ell_i(z_i(u))\big|_{u=u_b}$ and $u_b=\pi_b^\star(x)$, computable by automatic differentiation for only the safety-relevant outputs. These rows are first-order approximations, so conservative margins or a trust region around $u_b$ are advisable. This variant is future work.</li>
+  </ul>
+</section>
+
+<!-- ================================================================== 9 -->
+<section id="experiments">
+  <h2><span class="secnum">9</span>Experimental instantiation</h2>
+  <h3>Unicycle lane keeping</h3>
+  <div class="eq">$$\begin{bmatrix}\dot y\\ \dot v\\ \dot\psi\end{bmatrix}=\begin{bmatrix}v\sin\psi\\0\\0\end{bmatrix}+\begin{bmatrix}0&amp;0\\1&amp;0\\0&amp;1\end{bmatrix}\begin{bmatrix}a_{\text{cmd}}\\ r_{\text{cmd}}\end{bmatrix},\qquad a_{\text{cmd}}\in[-5,5]\,\mathrm{m/s^2},\ \ r_{\text{cmd}}\in[-1,1]\,\mathrm{rad/s}. \tag{125}$$</div>
+  <p>$\Delta t=0.05$&nbsp;s (20&nbsp;Hz). The safe set $\mathcal S=\{|y|\le1.8,\ |\psi|\le\pi/3\}$ gives four rows: $h_{\mathcal S,1}=y_{\max}+y$, $h_{\mathcal S,2}=y_{\max}-y$, $h_{\mathcal S,3}=\psi_{\max}+\psi$, $h_{\mathcal S,4}=\psi_{\max}-\psi$. The reference $y_{\text{ref}}(t)=2.5\sin(2\pi t/10)$, $v_{\text{ref}}=5$ is intentionally unsafe. The base pair is a discrete-time LQR about $x^\star=[0,5,0]^\top$ with $Q_d=\operatorname{diag}(1,1,1)$, $R_d=\operatorname{diag}(0.01,0.5)$ and $\mathcal B=\{e^\top Pe\le c_{\mathcal B}\}$, where $c_{\mathcal B}=0.3$ lies below the actuator-admissible level $\bar c\approx1.05$. With $T=1$&nbsp;s and $N=20$, the layer has $4(N+1)+1=85$ BCBF rows, or 90 inequalities with the input box and slack.</p>
+  <h3>Quadrotor powerloop</h3>
+  <div class="eq">$$\begin{gathered}\dot{\mathbf p}=\mathbf v,\qquad \dot{\mathbf v}=-g\,\mathbf e_3+R(\mathbf q)\,(a_{\text{cmd}}\mathbf e_3),\qquad \dot{\mathbf q}=\tfrac12\,\Xi(\mathbf q)\,\boldsymbol\omega_{\text{cmd}},\\ x=[\mathbf p^\top,\mathbf v^\top,\mathbf q^\top]^\top\in\mathbb R^{10},\end{gathered}$$</div>
+  <p>with thrust $a_{\text{cmd}}\in[0,4g]$, body rates $\boldsymbol\omega_{\text{cmd}}\in[-18,18]^3$&nbsp;rad/s, and $\Delta t=0.02$&nbsp;s (50&nbsp;Hz). The safe set is a hard ceiling, $h_{\mathcal S}(x)=z_{\text{ceil}}-p_z\ge0$ with $z_{\text{ceil}}=3$&nbsp;m. It has relative degree 2 for thrust and higher for body rates. The base pair is a hover LQR on a reduced 7-D error state $x_e=[p_z-z_{\text{des}},v_x,v_y,v_z,2q_{\text{err},x},2q_{\text{err},y},2q_{\text{err},z}]^\top$ with $u^\star=[g,0,0,0]^\top$ and $c_{\mathcal B}=8.0$ (admissible level $\bar c\approx12.38$), placing the ellipsoid strictly below the ceiling. With $T=2$&nbsp;s and $N=100$, the layer has $1\cdot(N+1)+1=102$ BCBF rows, or 111 inequalities.</p>
+  <div class="table-wrap" style="margin:16px 0 8px">
+    <table class="simple">
+      <thead><tr><th></th><th>Unicycle</th><th>Quadrotor</th></tr></thead>
+      <tbody>
+        <tr><th>Phase I backbone · steps</th><td>TD3-style · $3\times10^6$</td><td>TD3-style · $5\times10^6$</td></tr>
+        <tr><th>Safe-arrival discount $\beta$ · horizon $T$</th><td>0.92 · 1.0&nbsp;s</td><td>0.99 · 2.0&nbsp;s</td></tr>
+        <tr><th>Phase II backbone · steps</th><td>SAC + CIL · $10^6$</td><td>SAC + CIL · $1.5\times10^6$</td></tr>
+        <tr><th>Class-$\mathcal K_\infty$ gains $(\alpha_{\mathcal S},\alpha_{\mathcal B})$</th><td>(4.0, 2.0)</td><td>(4.0, 2.0)</td></tr>
+        <tr><th>Slack penalty $\lambda_\delta$ · QP solver</th><td>$10^5$ · qpax</td><td>$10^6$ · qpax</td></tr>
+        <tr><th>Warm start</th><td>none</td><td>vanilla powerloop-tracking SAC</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The quadrotor warm start follows the HardNet-CVX recipe of first training the nominal network without the projection. Because the layer projects every action during training and deployment, the safety guarantee holds regardless of how $\pi_\phi$ is initialized. Full hyperparameters are in Tables 8–9 of the paper.</p>
+  <p class="ref" style="margin-top:28px">References: Y. Chen, M. Jankovic, M. Santillo, A. D. Ames, "Backup control barrier functions: Formulation and comparative study," CDC 2021. T. Gurriet et al., "A scalable safety critical control framework for nonlinear systems," IEEE Access 2020. Y. Min, N. Azizan, "HardNet: Hard-constrained neural networks with universal approximation guarantees," 2025. K. Tracy, Z. Manchester, "On the differentiability of the primal-dual interior-point method," 2024.</p>
+</section>
+
+  </article>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <span>Kai S. Yun, Zeyang Li, Navid Azizan · Massachusetts Institute of Technology</span>
+    <span><a href="index.html">Overview</a> · <a href="https://arxiv.org/abs/2606.14536">arXiv</a> · <a href="https://github.com/azizanlab/PS2-RL">Code</a></span>
+  </div>
+</footer>
+</body>
+</html>
