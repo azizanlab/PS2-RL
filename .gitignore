@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Experiment outputs (reproduction runs land here; also matches helper symlinks)
+outputs/
+outputs_*
+wandb/
+
+# Slurm logs
+slurm-*.out
+slurm-*.err
+*.train.log
+
+# Editor/OS
+.vscode/
+.idea/
+.DS_Store
+
+# Caches
+.matplotlib/
+matplotlib-cache/

@@ -1,0 +1,21 @@
+# PS2-RL runtime dependencies (pinned to the versions used for the paper results).
+# Tested with Python 3.10.
+#
+# GPU note: all env stepping / rollout / training and the differentiable BCBF-QP run
+# on JAX with CUDA. `jax[cuda12]` pulls the matching jaxlib + CUDA 12 plugins for a
+# standard pip install on a CUDA-12 machine (e.g. the NVIDIA V100 nodes used in the
+# paper). On clusters that provide JAX through an environment module (the paper runs
+# used MIT Supercloud's `anaconda/Python-ML-2025a`, which ships jax/jaxlib 0.6.2 with
+# CUDA), install the rest of this file and let the module provide jax/jaxlib instead.
+# For CPU-only quick checks (imports / --help), `pip install jax==0.6.2` suffices.
+
+jax[cuda12]==0.6.2
+jaxlib==0.6.2
+numpy==1.26.4
+scipy==1.14.1
+matplotlib==3.10.0
+
+# Differentiable QP solver for the control-invariant layer (Tracy & Manchester,
+# arXiv:2406.11749). Available on PyPI; if the pinned version is unavailable, install
+# from the tagged upstream: pip install "qpax @ git+https://github.com/kevin-tracy/qpax.git@v0.0.9"
+qpax==0.0.9

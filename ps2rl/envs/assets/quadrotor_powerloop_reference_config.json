@@ -1,0 +1,37 @@
+{
+  "animation_config": {
+    "print_every": 1,
+    "slowdown": 2.0,
+    "trail_length": 150
+  },
+  "output_paths": {
+    "animation_gif": "quadrotor_powerloop_reference.gif",
+    "config_json": "quadrotor_powerloop_reference_config.json",
+    "diagnostic_figure": "quadrotor_powerloop_reference.png",
+    "reference_bundle_npz": "quadrotor_powerloop_reference.npz",
+    "trajectory_npy": "quadrotor_powerloop_reference_legacy.npy"
+  },
+  "powerloop_config": {
+    "a_cmd_max_g": 4.0,
+    "dt": 0.02,
+    "gravity": 9.81,
+    "num_loops": 1,
+    "omega_max": 18.0,
+    "radius": 1.5,
+    "speed": 4.5,
+    "speed_margin_eps": 1.1,
+    "x_center": 0.0,
+    "y_center": 0.0,
+    "z_bottom": 0.5,
+    "z_max": 3.0,
+    "z_top": 3.5
+  },
+  "powerloop_trajectory_stats": {
+    "max_a_cmd": 23.310000000000002,
+    "max_abs_omega": 10.827375339785519,
+    "max_quat_norm_error": 1.1102230246251565e-16,
+    "max_quat_step_norm": 0.10936252475690522,
+    "num_points": 106,
+    "total_duration": 2.0943951023931953
+  }
+}
