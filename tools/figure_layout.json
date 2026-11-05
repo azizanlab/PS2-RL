@@ -1,0 +1,1145 @@
+{
+ "note": "Placement of each Figma layer (main_figure.zip, 2x export) inside the 2x Figma frame, recovered by template matching against Figure 1 of arXiv:2606.14536. zorder lists paint order, bottom first.",
+ "frame_w": 3734,
+ "frame_h": 1145,
+ "zorder": [
+  "Group 67.png",
+  "Rectangle 37.png",
+  "Rectangle 38.png",
+  "Rectangle 39.png",
+  "Rectangle 42.png",
+  "Rectangle 35.png",
+  "Rectangle 36.png",
+  "Rectangle 34.png",
+  "Rectangle 20.png",
+  "Rectangle 40.png",
+  "Rectangle 41.png",
+  "Rectangle 33.png",
+  "Rectangle 43.png",
+  "Rectangle 33-1.png",
+  "Vector 117.png",
+  "Vector 118.png",
+  "Vector 97.png",
+  "Vector 116.png",
+  "Vector 85.png",
+  "Vector 86.png",
+  "Ellipse 76.png",
+  "Ellipse 78.png",
+  "Ellipse 52.png",
+  "Ellipse 64.png",
+  "Ellipse 49.png",
+  "Line 54.png",
+  "Line 55.png",
+  "Line 56.png",
+  "Line 57.png",
+  "Line 58.png",
+  "Ellipse 77.png",
+  "Arrow 41.png",
+  "Arrow 42.png",
+  "Arrow 44.png",
+  "Group 50.png",
+  "Group 51.png",
+  "Group 52.png",
+  "Group 53.png",
+  "Group 54.png",
+  "Group 55.png",
+  "Star 4.png",
+  "Star 5.png",
+  "Arrow 45.png",
+  "Arrow 46.png",
+  "Arrow 47.png",
+  "Arrow 48.png",
+  "Arrow 49.png",
+  "Arrow 50.png",
+  "Arrow 51.png",
+  "Arrow 52.png",
+  "Arrow 53.png",
+  "Arrow 54.png",
+  "Arrow 55.png",
+  "Arrow 56.png",
+  "Arrow 57.png",
+  "Ellipse 53.png",
+  "Ellipse 54.png",
+  "Ellipse 55.png",
+  "Ellipse 56.png",
+  "Ellipse 57.png",
+  "Ellipse 58.png",
+  "Ellipse 59.png",
+  "Ellipse 60.png",
+  "Ellipse 61.png",
+  "Ellipse 62.png",
+  "Ellipse 63.png",
+  "Ellipse 65.png",
+  "Ellipse 66.png",
+  "Ellipse 67.png",
+  "Ellipse 68.png",
+  "Ellipse 69.png",
+  "Ellipse 70.png",
+  "Ellipse 71.png",
+  "Ellipse 72.png",
+  "Ellipse 73.png",
+  "Ellipse 74.png",
+  "Ellipse 75.png",
+  "Vector 120.png",
+  "Vector 106.png",
+  "Vector 107.png",
+  "Vector 108.png",
+  "Vector 109.png",
+  "Arrow 58.png",
+  "Ellipse 79.png",
+  "Ellipse 80.png",
+  "Ellipse 81.png",
+  "Ellipse 82.png",
+  "Ellipse 83.png",
+  "Star 6.png",
+  "Arrow 59.png",
+  "Arrow 60.png",
+  "Arrow 61.png",
+  "Arrow 39.png",
+  "Arrow 43.png",
+  "Group 56.png",
+  "Group 57.png",
+  "Rectangle 21.png",
+  "Rectangle 22.png",
+  "Group 18.png",
+  "Group 49.png",
+  "Group 58.png",
+  "Group 59.png",
+  "Group 65.png",
+  "Vector 76.png",
+  "Vector 77.png",
+  "Vector 119.png",
+  "(Frozen) Safe Arrival Policy.png",
+  "(Linear) Base Controller.png",
+  "Backup Policy.png",
+  "Base Set & Controller.png",
+  "Control-Invariant Layer.png",
+  "Objective_ Train a performant and provably safe RL policy through the Control-Invariant Layer.png",
+  "PS2-RL Framework.png",
+  "Phase II_ Solves Subproblem 1.png",
+  "Phase I_ Solves Subproblem 2.png",
+  "Q_{/mathrm{SA},/beta}(x,u)=/mathbb E/left[/sum_{k=0}^/infty/beta^k/left(/prod_{i=0}^{k-1}/mathbf{c}(x_i)/right)/mathbf b(x_k)/right].png",
+  "Q_{/mathrm{SA},/beta}=/beta^3.png",
+  "Q_{/mathrm{SA},/beta}=/beta^5.png",
+  "Q_{/mathrm{SA},/beta}=0.png",
+  "Safe-Arrival Policy Training.png",
+  "begin{align}_&/mathcal P_{/mathrm{CIL}}(/pi_/phi)(x) =/arg/min_u/_ u-/pi_/phi(x)/__2^2/_&/mathrm{s.t.}/,/text{stay where }/pi_b^/theta/text{ can bring to }/mathcal B__/end{align}.png",
+  "begin{align}_/max_{/pi_/phi}&/,J(/pi_/phi)/_/mathrm{s.t.}&/,/pi_/phi(x)/in/mathbb K_{/mathrm{BCBF}}/_&/,/forall x/in/mathcal C_T(/pi_b^/theta)_/end{align}.png",
+  "e=x-x^/star.png",
+  "mathcal B =/{ e^/top P e/le c_{/mathcal B}/}.png",
+  "mathcal B-1.png",
+  "mathcal B-2.png",
+  "mathcal B.png",
+  "mathcal C_{T}.png",
+  "mathcal F.png",
+  "mathcal S-1.png",
+  "mathcal S.png",
+  "pi_/phi.png",
+  "pi_b^/theta =/begin{cases}/pi_{/mathcal B},&x/in/mathcal B/pi_{/mathrm{SA}}^/theta, & x/notin/mathcal B/end{cases}.png",
+  "pi_{/mathcal B} = u^/star -Ke.png",
+  "text{Check safe flow to }/mathcal B.png",
+  "text{Learn }/pi_{/mathrm{SA}}^/theta/text{ to maximize }Q_{/mathrm{SA},/beta}.png",
+  "text{No safe flow to }/mathcal B.png",
+  "text{Safe flow to }/mathcal B/text{ exists}.png",
+  "text{fast, safe arrival}.png",
+  "text{slow, safe arrival}.png",
+  "text{unsafe}.png",
+  "x^/star.png"
+ ],
+ "layers": [
+  {
+   "name": "Arrow 55.png",
+   "x": 1535,
+   "y": 979,
+   "w": 8,
+   "h": 15
+  },
+  {
+   "name": "mathcal C_{T}.png",
+   "x": 3172,
+   "y": 831,
+   "w": 60,
+   "h": 50
+  },
+  {
+   "name": "Arrow 57.png",
+   "x": 1640,
+   "y": 1013,
+   "w": 34,
+   "h": 28
+  },
+  {
+   "name": "Rectangle 36.png",
+   "x": 836,
+   "y": 828,
+   "w": 828,
+   "h": 245
+  },
+  {
+   "name": "Ellipse 54.png",
+   "x": 889,
+   "y": 967,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 72.png",
+   "x": 1587,
+   "y": 951,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 82.png",
+   "x": 3287,
+   "y": 970,
+   "w": 15,
+   "h": 15
+  },
+  {
+   "name": "Star 5.png",
+   "x": 1115,
+   "y": 748,
+   "w": 24,
+   "h": 23
+  },
+  {
+   "name": "Ellipse 58.png",
+   "x": 953,
+   "y": 934,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "(Linear) Base Controller.png",
+   "x": 1986,
+   "y": 440,
+   "w": 335,
+   "h": 93
+  },
+  {
+   "name": "Base Set & Controller.png",
+   "x": 147,
+   "y": 724,
+   "w": 625,
+   "h": 42
+  },
+  {
+   "name": "Arrow 47.png",
+   "x": 1629,
+   "y": 915,
+   "w": 47,
+   "h": 8
+  },
+  {
+   "name": "Vector 106.png",
+   "x": 3294,
+   "y": 893,
+   "w": 61,
+   "h": 78
+  },
+  {
+   "name": "Backup Policy.png",
+   "x": 1727,
+   "y": 447,
+   "w": 193,
+   "h": 122
+  },
+  {
+   "name": "Arrow 56.png",
+   "x": 1575,
+   "y": 963,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 59.png",
+   "x": 916,
+   "y": 954,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Group 54.png",
+   "x": 1166,
+   "y": 707,
+   "w": 25,
+   "h": 25
+  },
+  {
+   "name": "Ellipse 49.png",
+   "x": 3333,
+   "y": 813,
+   "w": 130,
+   "h": 117
+  },
+  {
+   "name": "Arrow 39.png",
+   "x": 1689,
+   "y": 269,
+   "w": 662,
+   "h": 116
+  },
+  {
+   "name": "Group 55.png",
+   "x": 1140,
+   "y": 731,
+   "w": 26,
+   "h": 26
+  },
+  {
+   "name": "Group 18.png",
+   "x": 1940,
+   "y": 802,
+   "w": 333,
+   "h": 189
+  },
+  {
+   "name": "Line 58.png",
+   "x": 314,
+   "y": 936,
+   "w": 59,
+   "h": 114
+  },
+  {
+   "name": "Ellipse 53.png",
+   "x": 1026,
+   "y": 983,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 71.png",
+   "x": 936,
+   "y": 1001,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Arrow 46.png",
+   "x": 1402,
+   "y": 972,
+   "w": 44,
+   "h": 30
+  },
+  {
+   "name": "Ellipse 80.png",
+   "x": 3448,
+   "y": 1001,
+   "w": 15,
+   "h": 15
+  },
+  {
+   "name": "Ellipse 70.png",
+   "x": 1564,
+   "y": 949,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Rectangle 41.png",
+   "x": 2371,
+   "y": 323,
+   "w": 636,
+   "h": 290
+  },
+  {
+   "name": "Ellipse 79.png",
+   "x": 3355,
+   "y": 1006,
+   "w": 15,
+   "h": 15
+  },
+  {
+   "name": "Control-Invariant Layer.png",
+   "x": 3040,
+   "y": 357,
+   "w": 628,
+   "h": 54
+  },
+  {
+   "name": "Phase I_ Solves Subproblem 2.png",
+   "x": 487,
+   "y": 62,
+   "w": 756,
+   "h": 54
+  },
+  {
+   "name": "Line 54.png",
+   "x": 162,
+   "y": 892,
+   "w": 114,
+   "h": 146
+  },
+  {
+   "name": "Arrow 51.png",
+   "x": 1477,
+   "y": 984,
+   "w": 27,
+   "h": 26
+  },
+  {
+   "name": "Objective_ Train a performant and provably safe RL policy through the Control-Invariant Layer.png",
+   "x": 2391,
+   "y": 157,
+   "w": 1261,
+   "h": 124
+  },
+  {
+   "name": "mathcal S-1.png",
+   "x": 963,
+   "y": 616,
+   "w": 46,
+   "h": 53
+  },
+  {
+   "name": "Group 58.png",
+   "x": 869,
+   "y": 397,
+   "w": 789,
+   "h": 88
+  },
+  {
+   "name": "Ellipse 66.png",
+   "x": 1561,
+   "y": 1026,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Arrow 60.png",
+   "x": 3053,
+   "y": 655,
+   "w": 161,
+   "h": 30
+  },
+  {
+   "name": "Ellipse 52.png",
+   "x": 941,
+   "y": 961,
+   "w": 61,
+   "h": 55
+  },
+  {
+   "name": "Group 67.png",
+   "x": 18,
+   "y": 20,
+   "w": 3709,
+   "h": 1099
+  },
+  {
+   "name": "Vector 116.png",
+   "x": 1450,
+   "y": 921,
+   "w": 196,
+   "h": 129
+  },
+  {
+   "name": "Vector 118.png",
+   "x": 945,
+   "y": 537,
+   "w": 261,
+   "h": 266
+  },
+  {
+   "name": "Vector 97.png",
+   "x": 875,
+   "y": 919,
+   "w": 196,
+   "h": 129
+  },
+  {
+   "name": "Vector 107.png",
+   "x": 3460,
+   "y": 882,
+   "w": 71,
+   "h": 60
+  },
+  {
+   "name": "Rectangle 21.png",
+   "x": 1929,
+   "y": 652,
+   "w": 112,
+   "h": 84
+  },
+  {
+   "name": "Phase II_ Solves Subproblem 1.png",
+   "x": 2640,
+   "y": 62,
+   "w": 777,
+   "h": 54
+  },
+  {
+   "name": "Vector 77.png",
+   "x": 1948,
+   "y": 534,
+   "w": 49,
+   "h": 48
+  },
+  {
+   "name": "Safe-Arrival Policy Training.png",
+   "x": 867,
+   "y": 161,
+   "w": 791,
+   "h": 54
+  },
+  {
+   "name": "Arrow 59.png",
+   "x": 3053,
+   "y": 602,
+   "w": 161,
+   "h": 30
+  },
+  {
+   "name": "mathcal B.png",
+   "x": 3375,
+   "y": 843,
+   "w": 44,
+   "h": 50
+  },
+  {
+   "name": "Group 65.png",
+   "x": 76,
+   "y": 146,
+   "w": 742,
+   "h": 543
+  },
+  {
+   "name": "Rectangle 38.png",
+   "x": 2351,
+   "y": 43,
+   "w": 1360,
+   "h": 1063
+  },
+  {
+   "name": "Rectangle 37.png",
+   "x": 41,
+   "y": 40,
+   "w": 1649,
+   "h": 1061
+  },
+  {
+   "name": "Ellipse 77.png",
+   "x": 235,
+   "y": 919,
+   "w": 17,
+   "h": 17
+  },
+  {
+   "name": "Vector 119.png",
+   "x": 2899,
+   "y": 350,
+   "w": 121,
+   "h": 695
+  },
+  {
+   "name": "text{slow, safe arrival}.png",
+   "x": 1230,
+   "y": 628,
+   "w": 389,
+   "h": 49
+  },
+  {
+   "name": "Group 56.png",
+   "x": 1220,
+   "y": 563,
+   "w": 142,
+   "h": 37
+  },
+  {
+   "name": "Vector 109.png",
+   "x": 3361,
+   "y": 924,
+   "w": 94,
+   "h": 83
+  },
+  {
+   "name": "Arrow 50.png",
+   "x": 1606,
+   "y": 990,
+   "w": 16,
+   "h": 19
+  },
+  {
+   "name": "Arrow 42.png",
+   "x": 1129,
+   "y": 603,
+   "w": 62,
+   "h": 162
+  },
+  {
+   "name": "Vector 76.png",
+   "x": 1937,
+   "y": 739,
+   "w": 22,
+   "h": 82
+  },
+  {
+   "name": "Ellipse 63.png",
+   "x": 1045,
+   "y": 1002,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Group 53.png",
+   "x": 1179,
+   "y": 675,
+   "w": 20,
+   "h": 20
+  },
+  {
+   "name": "Ellipse 75.png",
+   "x": 1512,
+   "y": 1003,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Group 50.png",
+   "x": 1130,
+   "y": 627,
+   "w": 25,
+   "h": 26
+  },
+  {
+   "name": "Ellipse 57.png",
+   "x": 988,
+   "y": 947,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Group 59.png",
+   "x": 2397,
+   "y": 690,
+   "w": 601,
+   "h": 377
+  },
+  {
+   "name": "Ellipse 73.png",
+   "x": 1621,
+   "y": 1004,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Arrow 53.png",
+   "x": 1625,
+   "y": 907,
+   "w": 50,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 55.png",
+   "x": 1017,
+   "y": 1011,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Rectangle 40.png",
+   "x": 2371,
+   "y": 124,
+   "w": 1321,
+   "h": 181
+  },
+  {
+   "name": "Arrow 54.png",
+   "x": 1561,
+   "y": 920,
+   "w": 25,
+   "h": 11
+  },
+  {
+   "name": "Star 4.png",
+   "x": 1080,
+   "y": 691,
+   "w": 24,
+   "h": 23
+  },
+  {
+   "name": "Ellipse 83.png",
+   "x": 3625,
+   "y": 892,
+   "w": 15,
+   "h": 15
+  },
+  {
+   "name": "Vector 108.png",
+   "x": 3506,
+   "y": 847,
+   "w": 118,
+   "h": 41
+  },
+  {
+   "name": "Vector 85.png",
+   "x": 3047,
+   "y": 752,
+   "w": 628,
+   "h": 307
+  },
+  {
+   "name": "Arrow 61.png",
+   "x": 3053,
+   "y": 705,
+   "w": 161,
+   "h": 30
+  },
+  {
+   "name": "Ellipse 81.png",
+   "x": 3525,
+   "y": 937,
+   "w": 15,
+   "h": 15
+  },
+  {
+   "name": "Rectangle 33-1.png",
+   "x": 3030,
+   "y": 422,
+   "w": 653,
+   "h": 167
+  },
+  {
+   "name": "text{fast, safe arrival}.png",
+   "x": 1228,
+   "y": 505,
+   "w": 367,
+   "h": 49
+  },
+  {
+   "name": "mathcal B-1.png",
+   "x": 204,
+   "y": 813,
+   "w": 43,
+   "h": 50
+  },
+  {
+   "name": "Ellipse 67.png",
+   "x": 1528,
+   "y": 936,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "text{unsafe}.png",
+   "x": 1228,
+   "y": 733,
+   "w": 150,
+   "h": 40
+  },
+  {
+   "name": "Arrow 43.png",
+   "x": 1220,
+   "y": 779,
+   "w": 220,
+   "h": 37
+  },
+  {
+   "name": "Rectangle 22.png",
+   "x": 1929,
+   "y": 586,
+   "w": 81,
+   "h": 63
+  },
+  {
+   "name": "Group 57.png",
+   "x": 1220,
+   "y": 680,
+   "w": 231,
+   "h": 37
+  },
+  {
+   "name": "Ellipse 64.png",
+   "x": 1517,
+   "y": 963,
+   "w": 61,
+   "h": 55
+  },
+  {
+   "name": "Arrow 41.png",
+   "x": 1088,
+   "y": 602,
+   "w": 89,
+   "h": 101
+  },
+  {
+   "name": "Ellipse 62.png",
+   "x": 1465,
+   "y": 969,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 56.png",
+   "x": 986,
+   "y": 1024,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Vector 120.png",
+   "x": 3228,
+   "y": 805,
+   "w": 329,
+   "h": 214
+  },
+  {
+   "name": "Arrow 44.png",
+   "x": 1003,
+   "y": 548,
+   "w": 68,
+   "h": 101
+  },
+  {
+   "name": "Star 6.png",
+   "x": 3506,
+   "y": 778,
+   "w": 48,
+   "h": 46
+  },
+  {
+   "name": "PS2-RL Framework.png",
+   "x": 1762,
+   "y": 58,
+   "w": 505,
+   "h": 185
+  },
+  {
+   "name": "Vector 117.png",
+   "x": 869,
+   "y": 507,
+   "w": 343,
+   "h": 309
+  },
+  {
+   "name": "Rectangle 33.png",
+   "x": 3017,
+   "y": 323,
+   "w": 674,
+   "h": 767
+  },
+  {
+   "name": "Rectangle 20.png",
+   "x": 1706,
+   "y": 414,
+   "w": 629,
+   "h": 601
+  },
+  {
+   "name": "(Frozen) Safe Arrival Policy.png",
+   "x": 1743,
+   "y": 772,
+   "w": 172,
+   "h": 217
+  },
+  {
+   "name": "Group 51.png",
+   "x": 1105,
+   "y": 658,
+   "w": 25,
+   "h": 26
+  },
+  {
+   "name": "Ellipse 76.png",
+   "x": 106,
+   "y": 796,
+   "w": 276,
+   "h": 273
+  },
+  {
+   "name": "Ellipse 74.png",
+   "x": 1482,
+   "y": 1013,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Arrow 45.png",
+   "x": 1078,
+   "y": 973,
+   "w": 44,
+   "h": 30
+  },
+  {
+   "name": "Ellipse 65.png",
+   "x": 1492,
+   "y": 954,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Ellipse 61.png",
+   "x": 1602,
+   "y": 985,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Arrow 49.png",
+   "x": 1550,
+   "y": 986,
+   "w": 8,
+   "h": 23
+  },
+  {
+   "name": "Vector 86.png",
+   "x": 3136,
+   "y": 768,
+   "w": 488,
+   "h": 279
+  },
+  {
+   "name": "Arrow 58.png",
+   "x": 3535,
+   "y": 887,
+   "w": 130,
+   "h": 54
+  },
+  {
+   "name": "Arrow 48.png",
+   "x": 1480,
+   "y": 1029,
+   "w": 24,
+   "h": 14
+  },
+  {
+   "name": "Rectangle 43.png",
+   "x": 2453,
+   "y": 778,
+   "w": 463,
+   "h": 193
+  },
+  {
+   "name": "Group 49.png",
+   "x": 1127,
+   "y": 908,
+   "w": 268,
+   "h": 152
+  },
+  {
+   "name": "Rectangle 39.png",
+   "x": 60,
+   "y": 133,
+   "w": 768,
+   "h": 553
+  },
+  {
+   "name": "Ellipse 60.png",
+   "x": 1011,
+   "y": 949,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "mathcal F.png",
+   "x": 881,
+   "y": 633,
+   "w": 61,
+   "h": 53
+  },
+  {
+   "name": "mathcal S.png",
+   "x": 3590,
+   "y": 950,
+   "w": 43,
+   "h": 50
+  },
+  {
+   "name": "Line 55.png",
+   "x": 174,
+   "y": 863,
+   "w": 148,
+   "h": 134
+  },
+  {
+   "name": "Arrow 52.png",
+   "x": 1513,
+   "y": 920,
+   "w": 33,
+   "h": 8
+  },
+  {
+   "name": "Rectangle 35.png",
+   "x": 836,
+   "y": 225,
+   "w": 828,
+   "h": 270
+  },
+  {
+   "name": "Ellipse 68.png",
+   "x": 907,
+   "y": 1011,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Line 56.png",
+   "x": 202,
+   "y": 929,
+   "w": 32,
+   "h": 110
+  },
+  {
+   "name": "Ellipse 69.png",
+   "x": 1592,
+   "y": 1013,
+   "w": 10,
+   "h": 10
+  },
+  {
+   "name": "Rectangle 42.png",
+   "x": 61,
+   "y": 703,
+   "w": 768,
+   "h": 383
+  },
+  {
+   "name": "Line 57.png",
+   "x": 129,
+   "y": 913,
+   "w": 62,
+   "h": 118
+  },
+  {
+   "name": "Ellipse 78.png",
+   "x": 992,
+   "y": 674,
+   "w": 137,
+   "h": 124
+  },
+  {
+   "name": "Group 52.png",
+   "x": 1171,
+   "y": 642,
+   "w": 23,
+   "h": 24
+  },
+  {
+   "name": "mathcal B-2.png",
+   "x": 1037,
+   "y": 707,
+   "w": 47,
+   "h": 53
+  },
+  {
+   "name": "Rectangle 34.png",
+   "x": 847,
+   "y": 137,
+   "w": 828,
+   "h": 950
+  },
+  {
+   "name": "pi_/phi.png",
+   "x": 2592,
+   "y": 1029,
+   "w": 52,
+   "h": 39
+  },
+  {
+   "name": "mathcal B =/{ e^/top P e/le c_{/mathcal B}/}.png",
+   "x": 388,
+   "y": 813,
+   "w": 421,
+   "h": 65
+  },
+  {
+   "name": "text{Learn }/pi_{/mathrm{SA}}^/theta/text{ to maximize }Q_{/mathrm{SA},/beta}.png",
+   "x": 985,
+   "y": 841,
+   "w": 595,
+   "h": 58
+  },
+  {
+   "name": "Q_{/mathrm{SA},/beta}=0.png",
+   "x": 1455,
+   "y": 780,
+   "w": 175,
+   "h": 43
+  },
+  {
+   "name": "Q_{/mathrm{SA},/beta}=/beta^5.png",
+   "x": 1455,
+   "y": 678,
+   "w": 200,
+   "h": 52
+  },
+  {
+   "name": "Q_{/mathrm{SA},/beta}=/beta^3.png",
+   "x": 1377,
+   "y": 551,
+   "w": 200,
+   "h": 52
+  },
+  {
+   "name": "Q_{/mathrm{SA},/beta}(x,u)=/mathbb E/left[/sum_{k=0}^/infty/beta^k/left(/prod_{i=0}^{k-1}/mathbf{c}(x_i)/right)/mathbf b(x_k)/right].png",
+   "x": 867,
+   "y": 235,
+   "w": 786,
+   "h": 133
+  },
+  {
+   "name": "e=x-x^/star.png",
+   "x": 469,
+   "y": 971,
+   "w": 280,
+   "h": 48
+  },
+  {
+   "name": "pi_b^/theta =/begin{cases}/pi_{/mathcal B},&x/in/mathcal B/pi_{/mathrm{SA}}^/theta, & x/notin/mathcal B/end{cases}.png",
+   "x": 1743,
+   "y": 578,
+   "w": 537,
+   "h": 156
+  },
+  {
+   "name": "begin{align}_&/mathcal P_{/mathrm{CIL}}(/pi_/phi)(x) =/arg/min_u/_ u-/pi_/phi(x)/__2^2/_&/mathrm{s.t.}/,/text{stay where }/pi_b^/theta/text{ can bring to }/mathcal B__/end{align}.png",
+   "x": 3047,
+   "y": 447,
+   "w": 620,
+   "h": 125
+  },
+  {
+   "name": "text{Check safe flow to }/mathcal B.png",
+   "x": 3231,
+   "y": 599,
+   "w": 394,
+   "h": 34
+  },
+  {
+   "name": "begin{align}_/max_{/pi_/phi}&/,J(/pi_/phi)/_/mathrm{s.t.}&/,/pi_/phi(x)/in/mathbb K_{/mathrm{BCBF}}/_&/,/forall x/in/mathcal C_T(/pi_b^/theta)_/end{align}.png",
+   "x": 2457,
+   "y": 341,
+   "w": 490,
+   "h": 265
+  },
+  {
+   "name": "text{No safe flow to }/mathcal B.png",
+   "x": 3229,
+   "y": 704,
+   "w": 326,
+   "h": 33
+  },
+  {
+   "name": "pi_{/mathcal B} = u^/star -Ke.png",
+   "x": 437,
+   "y": 896,
+   "w": 348,
+   "h": 55
+  },
+  {
+   "name": "text{Safe flow to }/mathcal B/text{ exists}.png",
+   "x": 3231,
+   "y": 652,
+   "w": 379,
+   "h": 33
+  },
+  {
+   "name": "x^/star.png",
+   "x": 259,
+   "y": 877,
+   "w": 49,
+   "h": 43
+  }
+ ]
+}
